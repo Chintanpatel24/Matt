@@ -83,19 +83,19 @@ git pull
 
 ## Key Features
 
-- ** Sleek Matt Black Aesthetic**: Custom HSL dark palette (`#09090b` onyx background, `#18181b` pane surface, `#27272a` charcoal borders, matte gold accents).
-- ** Startup Session Screen**: On launch, directly choose between opening current directory (`./`) or starting a fresh home session (`~/`).
-- ** 3-Column Split View**:
+- **Sleek Matt Black Aesthetic**: Custom HSL dark palette (`#09090b` onyx background, `#18181b` pane surface, `#27272a` charcoal borders, matte gold accents).
+- **Startup Session Screen**: On launch, directly choose between opening current directory (`./`) or starting a fresh home session (`~/`).
+- **3-Column Split View**:
   - **Left Pane (Navigation Tree)**: Directory listing with live fuzzy filtering (`/`) & mouse click support.
   - **Center Pane (Explorer)**: Folder contents view with quick drill-down.
   - **Right Pane (Code & Image Inspector)**: Real-time syntax-highlighted code inspector, image pixel previewer (`.png`, `.jpg`, `.gif`, `.webp`), binary hex view, and directory overview.
-- ** Disk Space Analyzer (`Alt+D`)**: `ncdu`-style visual disk usage breakdown with percentage progress bars (`██████░░ 75%`).
-- ** Instant Fuzzy Search (`/`)**: Live fuzzy filtering across file lists as you type.
-- ** Config & Alias Extensions (`~/.config/matt/config.json`)**: Define custom command aliases (e.g. `ll`, `findbig`, `count`, `sysinfo`) and theme overrides.
-- ** Integrated Bottom Terminal**:
+- **Disk Space Analyzer (`Alt+D`)**: `ncdu`-style visual disk usage breakdown with percentage progress bars (`██████░░ 75%`).
+- **Instant Fuzzy Search (`/`)**: Live fuzzy filtering across file lists as you type.
+- **Config & Alias Extensions (`~/.config/matt/config.json`)**: Define custom command aliases (e.g. `ll`, `findbig`, `count`, `sysinfo`) and theme overrides.
+- **Integrated Bottom Terminal**:
   - Direct shell command execution (`cd`, `touch`, `mkdir`, `rm`, `find`, `git`, `cat`, etc.).
   - Executing `cd <path>` syncs all 3 upper panes immediately to the new directory!
-- ** Interactive Permission Prompt System**: Safe confirmation dialogs for destructive operations (`rm`, `chmod`, `chown`) and feature approvals.
+- **Interactive Permission Prompt System**: Safe confirmation dialogs for destructive operations (`rm`, `chmod`, `chown`) and feature approvals.
 
 ---
 
