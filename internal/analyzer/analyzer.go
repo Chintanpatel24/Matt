@@ -6,6 +6,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 // ItemUsage holds size statistics for an item in the directory.
@@ -20,9 +22,39 @@ type ItemUsage struct {
 
 // DiskUsageResult contains analyzed disk breakdown.
 type DiskUsageResult struct {
-	TotalSize int64
-	Items     []ItemUsage
-	DirPath   string
+	TotalSize      int64
+	Items          []ItemUsage
+	DirPath        string
+	SortByName     bool
+	AnalyzerScroll int
+}
+
+// AnalyzerResultMsg is sent when async analysis completes.
+type AnalyzerResultMsg struct {
+	Result DiskUsageResult
+	Err    error
+}
+
+// AnalyzeDirectoryAsync returns a tea.Cmd that runs disk analysis in the background.
+func AnalyzeDirectoryAsync(dirPath string) tea.Cmd {
+	return func() tea.Msg {
+		res, err := AnalyzeDirectory(dirPath)
+		return AnalyzerResultMsg{Result: res, Err: err}
+	}
+}
+
+// ToggleSort toggles the sorting method between size and name.
+func (r *DiskUsageResult) ToggleSort() {
+	r.SortByName = !r.SortByName
+	if r.SortByName {
+		sort.Slice(r.Items, func(i, j int) bool {
+			return strings.ToLower(r.Items[i].Name) < strings.ToLower(r.Items[j].Name)
+		})
+	} else {
+		sort.Slice(r.Items, func(i, j int) bool {
+			return r.Items[i].SizeBytes > r.Items[j].SizeBytes
+		})
+	}
 }
 
 // AnalyzeDirectory scans directory contents and computes relative sizes.

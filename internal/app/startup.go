@@ -91,9 +91,9 @@ func (m StartupModel) View() string {
 	var sb strings.Builder
 	sb.WriteString(m.Styles.HeaderTitle.Render(asciiLogo))
 	sb.WriteString("\n\n")
-	sb.WriteString(m.Styles.MutedText.Render("       Matt Black Terminal File Manager v1.0.0"))
+	sb.WriteString(m.Styles.MutedText.Render("       Matt Black Terminal File Manager v2.0.0"))
 	sb.WriteString("\n")
-	sb.WriteString(m.Styles.MutedText.Render("     ============================================"))
+	sb.WriteString(m.Styles.MutedText.Render("     ════════════════════════════════════════════"))
 	sb.WriteString("\n\n")
 	sb.WriteString(m.Styles.Header.Render(" Choose your starting workspace session:"))
 	sb.WriteString("\n\n")
@@ -102,11 +102,11 @@ func (m StartupModel) View() string {
 	opt1 := fmt.Sprintf("   Open Fresh Session       (%s)", m.HomePath)
 
 	if m.Cursor == 0 {
-		opt0 = m.Styles.ModalButtonActive.Render(fmt.Sprintf(" > Open Current Directory   (%s) ", m.CurrentPath))
+		opt0 = m.Styles.ModalButtonActive.Render(fmt.Sprintf(" ▌ Open Current Directory   (%s) ", m.CurrentPath))
 		opt1 = m.Styles.MutedText.Render(fmt.Sprintf("   Open Fresh Session       (%s)", m.HomePath))
 	} else {
 		opt0 = m.Styles.MutedText.Render(fmt.Sprintf("   Open Current Directory   (%s)", m.CurrentPath))
-		opt1 = m.Styles.ModalButtonActive.Render(fmt.Sprintf(" > Open Fresh Session       (%s) ", m.HomePath))
+		opt1 = m.Styles.ModalButtonActive.Render(fmt.Sprintf(" ▌ Open Fresh Session       (%s) ", m.HomePath))
 	}
 
 	sb.WriteString(opt0)

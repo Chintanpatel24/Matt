@@ -25,7 +25,7 @@ func main() {
 			os.Exit(0)
 		}
 		if arg == "-v" || arg == "--version" {
-			fmt.Println("Matt Black Terminal File Manager v1.0.0")
+			fmt.Println("Matt Black Terminal File Manager v2.0.0")
 			os.Exit(0)
 		}
 		expanded := config.ExpandPath(arg)
@@ -43,7 +43,6 @@ func main() {
 	p := tea.NewProgram(
 		initialModel,
 		tea.WithAltScreen(),
-		tea.WithMouseCellMotion(),
 	)
 
 	if _, err := p.Run(); err != nil {
@@ -53,7 +52,7 @@ func main() {
 }
 
 func printUsage() {
-	fmt.Println(`Matt - Matt Black Terminal File Manager
+	fmt.Println(`Matt - Matt Black Terminal File Manager v2.0.0
 
 Usage:
   matt [directory]
@@ -65,17 +64,24 @@ Flags:
 
 Keyboard Controls:
   Up / Down (k/j)   Navigate entries in focused pane
-  Right / Enter (l) Open folder / expand directory
-  Left (h)          Go up to parent directory
-  Alt+D             Toggle Disk Space Analyzer view (ncdu style)
-  /                 Fuzzy search and filter directory list
-  Left Mouse Click  Focus pane & select item directly
-  Tab / Shift+Tab   Cycle active focus between 3 upper panes & bottom terminal
-  :                 Directly focus bottom terminal command runner / alias extensions
-  .                 Toggle hidden files
-  r                 Refresh directory view
-  d                 Delete selected file/folder (triggers permission prompt)
-  q / Ctrl+C        Quit Matt
+  Right / Enter (l)  Open folder / expand directory
+  Left (h)           Go up to parent directory
+  Alt+D              Toggle Disk Space Analyzer view (async)
+  /                  Fuzzy search and filter directory list
+  Tab / Shift+Tab    Cycle active focus between panes & terminal
+  :                  Focus bottom terminal command runner
+  .                  Toggle hidden files
+  r                  Refresh directory view
+  d                  Delete selected file/folder (permission prompt)
+  n                  Create new file or folder
+  c                  Copy selected file/folder
+  p                  Paste copied item into current directory
+  m                  Move/rename selected file/folder
+  b                  Open bookmarks list
+  B                  Bookmark current directory
+  g                  Jump to first item
+  G                  Jump to last item
+  q / Ctrl+C         Quit Matt
 
 Configuration & Extensions:
   Config file: ~/.config/matt/config.json
