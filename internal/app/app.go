@@ -17,6 +17,7 @@ import (
 	"github.com/Chintanpatel24/Matt/internal/preview"
 	"github.com/Chintanpatel24/Matt/internal/terminal"
 	"github.com/Chintanpatel24/Matt/internal/ui"
+	"github.com/Chintanpatel24/Matt/internal/version"
 )
 
 // ActiveFocus specifies which pane currently has key focus.
@@ -150,7 +151,7 @@ func NewAppModel(cfg config.Config, initialDir string) AppModel {
 		HistoryIdx:   -1,
 		Bookmarks:    config.LoadBookmarks(),
 		LastCmdOut:   "Ready. Press [Tab] focus • [/] filter • [Alt+D] analyzer • [:] cmd • [.] hidden",
-		StatusMsg:    "Matt v2.0.0 — Matt Black Terminal File Manager",
+		StatusMsg:    fmt.Sprintf("Matt %s — Matt Black Terminal File Manager", version.Version),
 	}
 
 	m.refreshLeftEntries()
@@ -1018,7 +1019,7 @@ func (m AppModel) View() string {
 
 	// 1. Header Bar with breadcrumb
 	headerLeft := m.Styles.HeaderTitle.Render(" MATT ") + " " + m.buildBreadcrumb()
-	headerRight := m.getModeIndicator() + " " + m.Styles.HeaderBadge.Render(" v2.0.0 ")
+	headerRight := m.getModeIndicator() + " " + m.Styles.HeaderBadge.Render(fmt.Sprintf(" %s ", version.Version))
 	headerGap := max(0, m.Width-lipgloss.Width(headerLeft)-lipgloss.Width(headerRight))
 	headerBar := m.Styles.Header.Render(headerLeft + strings.Repeat(" ", headerGap) + headerRight)
 

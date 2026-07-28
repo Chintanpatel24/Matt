@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/Chintanpatel24/Matt/internal/config"
 	"github.com/Chintanpatel24/Matt/internal/ui"
+	"github.com/Chintanpatel24/Matt/internal/version"
 )
 
 // StartupChoice indicates which directory option the user selected.
@@ -20,13 +21,13 @@ const (
 
 // StartupModel renders the initial Matt welcome prompt.
 type StartupModel struct {
-	Cursor     int
-	Selected   StartupChoice
-	IsDone     bool
-	Width      int
-	Height     int
-	Config     config.Config
-	Styles     ui.Styles
+	Cursor      int
+	Selected    StartupChoice
+	IsDone      bool
+	Width       int
+	Height      int
+	Config      config.Config
+	Styles      ui.Styles
 	CurrentPath string
 	HomePath    string
 }
@@ -77,43 +78,53 @@ func (m StartupModel) Update(msg tea.Msg) (StartupModel, tea.Cmd) {
 }
 
 func (m StartupModel) View() string {
-	asciiLogo := `
-  ███▄ ▄███▓ ▄▄▄     ▄▄▄█████▓▄▄▄█████▓
-  ▓██▒▀█▀ ██▒▒████▄   ▓  ██▒ ▓▒▓  ██▒ ▓▒
-  ▓██    ▓██░▒██  ▀█▄ ▒ ▓██░ ▒░▒ ▓██░ ▒░
-  ▒██    ▒██ ░██▄▄▄▄██░ ▓██▓ ░ ░ ▓██▓ ░ 
-  ▒██▒   ░██▒ ▓█   ▓██▒ ▒██▒ ░   ▒██▒ ░ 
-  ░ ▒░   ░  ░ ▒▒   ▓▒█░ ▒ ░░     ▒ ░░   
-  ░  ░      ░  ▒   ▒▒ ░   ░        ░    
-  ░      ░     ░   ▒    ░        ░      
-         ░         ░  ░`
+	asciiLogo := `███▄ ▄███▓ ▄▄▄     ▄▄▄█████▓▄▄▄█████▓
+▓██▒▀█▀ ██▒▒████▄   ▓  ██▒ ▓▒▓  ██▒ ▓▒
+▓██    ▓██░▒██  ▀█▄ ▒ ▓██░ ▒░▒ ▓██░ ▒░
+▒██    ▒██ ░██▄▄▄▄██░ ▓██▓ ░ ░ ▓██▓ ░ 
+▒██▒   ░██▒ ▓█   ▓██▒ ▒██▒ ░   ▒██▒ ░ 
+░ ▒░   ░  ░ ▒▒   ▓▒█░ ▒ ░░     ▒ ░░   
+░  ░      ░  ▒   ▒▒ ░   ░        ░    
+░      ░     ░   ▒    ░        ░      
+       ░         ░  ░`
 
 	var sb strings.Builder
-	sb.WriteString(m.Styles.HeaderTitle.Render(asciiLogo))
-	sb.WriteString("\n\n")
-	sb.WriteString(m.Styles.MutedText.Render("       Matt Black Terminal File Manager v2.0.0"))
-	sb.WriteString("\n")
-	sb.WriteString(m.Styles.MutedText.Render("     ════════════════════════════════════════════"))
-	sb.WriteString("\n\n")
-	sb.WriteString(m.Styles.Header.Render(" Choose your starting workspace session:"))
+
+	// Logo Header
+	sb.WriteString(lipgloss.NewStyle().Align(lipgloss.Center).Render(m.Styles.HeaderTitle.Render(asciiLogo)))
 	sb.WriteString("\n\n")
 
-	opt0 := fmt.Sprintf("   Open Current Directory   (%s)", m.CurrentPath)
-	opt1 := fmt.Sprintf("   Open Fresh Session       (%s)", m.HomePath)
+	// Version Subtitle
+	subtitle := fmt.Sprintf("Matt Black Terminal File Manager %s", version.Version)
+	sb.WriteString(lipgloss.NewStyle().Width(52).Align(lipgloss.Center).Render(m.Styles.MutedText.Render(subtitle)))
+	sb.WriteString("\n\n")
 
+	// Prompt Title
+	promptHeader := m.Styles.Header.Render(" Choose Workspace Session ")
+	sb.WriteString(lipgloss.NewStyle().Width(52).Align(lipgloss.Center).Render(promptHeader))
+	sb.WriteString("\n\n")
+
+	// Options
+	opt0Str := fmt.Sprintf("Open Current Directory (%s)", shortenPath(m.CurrentPath))
+	opt1Str := fmt.Sprintf("Open Fresh Session (%s)", shortenPath(m.HomePath))
+
+	var opt0, opt1 string
 	if m.Cursor == 0 {
-		opt0 = m.Styles.ModalButtonActive.Render(fmt.Sprintf(" ▌ Open Current Directory   (%s) ", m.CurrentPath))
-		opt1 = m.Styles.MutedText.Render(fmt.Sprintf("   Open Fresh Session       (%s)", m.HomePath))
+		opt0 = m.Styles.ModalButtonActive.Render(fmt.Sprintf(" ▌ %s ", opt0Str))
+		opt1 = m.Styles.MutedText.Render(fmt.Sprintf("   %s", opt1Str))
 	} else {
-		opt0 = m.Styles.MutedText.Render(fmt.Sprintf("   Open Current Directory   (%s)", m.CurrentPath))
-		opt1 = m.Styles.ModalButtonActive.Render(fmt.Sprintf(" ▌ Open Fresh Session       (%s) ", m.HomePath))
+		opt0 = m.Styles.MutedText.Render(fmt.Sprintf("   %s", opt0Str))
+		opt1 = m.Styles.ModalButtonActive.Render(fmt.Sprintf(" ▌ %s ", opt1Str))
 	}
 
 	sb.WriteString(opt0)
 	sb.WriteString("\n\n")
 	sb.WriteString(opt1)
 	sb.WriteString("\n\n")
-	sb.WriteString(m.Styles.MutedText.Render(" [↑/↓] Navigate  •  [Enter] Confirm Choice  •  [q/Ctrl+C] Exit"))
+
+	// Footer controls hint
+	controls := m.Styles.MutedText.Render("[↑/↓] Navigate  •  [Enter] Confirm  •  [q] Quit")
+	sb.WriteString(lipgloss.NewStyle().Width(52).Align(lipgloss.Center).Render(controls))
 
 	box := m.Styles.ModalBox.Render(sb.String())
 
@@ -129,4 +140,15 @@ func (m StartupModel) View() string {
 		box,
 		lipgloss.WithWhitespaceChars(" "),
 	)
+}
+
+func shortenPath(path string) string {
+	home := config.GetHomeDir()
+	if strings.HasPrefix(path, home) {
+		path = "~" + path[len(home):]
+	}
+	if len(path) > 28 {
+		return "..." + path[len(path)-25:]
+	}
+	return path
 }

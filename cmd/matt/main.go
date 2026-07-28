@@ -8,6 +8,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/Chintanpatel24/Matt/internal/app"
 	"github.com/Chintanpatel24/Matt/internal/config"
+	"github.com/Chintanpatel24/Matt/internal/version"
 )
 
 func main() {
@@ -25,7 +26,7 @@ func main() {
 			os.Exit(0)
 		}
 		if arg == "-v" || arg == "--version" {
-			fmt.Println("Matt Black Terminal File Manager v2.0.0")
+			fmt.Printf("Matt Black Terminal File Manager %s\n", version.Version)
 			os.Exit(0)
 		}
 		expanded := config.ExpandPath(arg)
@@ -52,7 +53,7 @@ func main() {
 }
 
 func printUsage() {
-	fmt.Println(`Matt - Matt Black Terminal File Manager v2.0.0
+	fmt.Printf(`Matt - Matt Black Terminal File Manager %s
 
 Usage:
   matt [directory]
@@ -85,5 +86,6 @@ Keyboard Controls:
 
 Configuration & Extensions:
   Config file: ~/.config/matt/config.json
-  Supports custom themes and command aliases (e.g. ll, findbig, count).`)
+  Supports custom themes and command aliases (e.g. ll, findbig, count).
+`, version.Version)
 }
