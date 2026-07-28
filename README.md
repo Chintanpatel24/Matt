@@ -23,9 +23,7 @@
 - **Matt** is a fast, keyboard & mouse driven, modern terminal file manager featuring a **Matt Black** design aesthetic, a **3-column pane system**, an **interactive bottom command line runner**, **disk space analyzer**, **live fuzzy finder**, **ASCII image previews**, and a built-in **permission approval framework**.
 
 <div align=center>
-  
-<img width="550" alt="mattt" src="https://github.com/user-attachments/assets/afb166e1-7df4-43d9-a5d7-049df1c31775">
-
+<img width="1000" alt="matttt" src="https://github.com/user-attachments/assets/36131f34-ebc1-4478-a347-75c983a51efd" />
 </div>
 
 ## Installation Options
@@ -86,9 +84,7 @@ git pull
 ./install.sh
 ```
 
-<div align=center>
-<img width="1000" alt="matttt" src="https://github.com/user-attachments/assets/36131f34-ebc1-4478-a347-75c983a51efd" />
-</div>
+---
 
 ## Key Features
 
