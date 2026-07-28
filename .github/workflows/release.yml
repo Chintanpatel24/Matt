@@ -12,13 +12,14 @@ permissions:
 
 jobs:
   release:
-    name: Build & Publish Release
+    name: Build, Auto-Update Code Version & Publish Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v7
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -32,6 +33,23 @@ jobs:
           echo "VERSION=${TAG_NAME}" >> $GITHUB_ENV
           echo "Building Matt for tag version: ${TAG_NAME}"
 
+      - name: Auto-Update Code Version File
+        run: |
+          echo "Updating internal/version/version.go directly in repository code to ${{ env.VERSION }}"
+          cat <<EOF > internal/version/version.go
+          package version
+
+          // Version is the application version string.
+          // Automatically updated by GitHub release workflow on tag push.
+          var Version = "${{ env.VERSION }}"
+          EOF
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add internal/version/version.go
+          git commit -m "chore: auto-bump version to ${{ env.VERSION }} [skip ci]" || echo "No changes to commit"
+          git push origin HEAD:${{ github.event.repository.default_branch }} || echo "Push to default branch skipped"
+
       - name: Build Multi-Platform Binaries with Auto-Version Injection
         run: |
           mkdir -p dist
@@ -44,13 +62,13 @@ jobs:
           GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o dist/matt-windows-amd64.exe ./cmd/matt
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v4
         with:
           name: matt-binaries-${{ env.VERSION }}
           path: dist/*
 
       - name: Create GitHub Release with Binaries
-        uses: softprops/action-gh-release@v3
+        uses: softprops/action-gh-release@v2
         with:
           name: Matt ${{ env.VERSION }}
           tag_name: ${{ github.ref_name }}
