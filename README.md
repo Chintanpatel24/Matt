@@ -47,10 +47,10 @@
   <table>
       <tr>
        <td>
-      <img width="570" height="540" alt="mattt" src="https://github.com/user-attachments/assets/bdc8921c-0dd8-4e6d-9db5-d5bcccb974f3" />
+      <img width="600" height="600" alt="mattt" src="https://github.com/user-attachments/assets/bdc8921c-0dd8-4e6d-9db5-d5bcccb974f3" />
        </td>
         <td>
-      <img width="670" height="530" alt="matt" src="https://github.com/user-attachments/assets/e83bd5b0-aa2b-4049-a8e3-897e31cb1457" />
+      <img width="600" height="600" alt="matt" src="https://github.com/user-attachments/assets/afb6c3ae-f9f7-4bfa-89af-4e8c89efc1a4" /
       </td>
       </tr>
   </table>
