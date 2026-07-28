@@ -1,33 +1,67 @@
-name: Release
+name: Release & Auto-Version
 
 on:
   push:
     tags:
       - 'v*'
+      - '*.*.*'
+      - '[0-9]*'
+
+permissions:
+  contents: write
 
 jobs:
   release:
+    name: Build & Publish Release
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
           go-version: '1.22'
 
-      - name: Build Multi-Platform Binaries
+      - name: Determine Version Tag
+        id: get_version
+        run: |
+          TAG_NAME="${GITHUB_REF#refs/tags/}"
+          echo "VERSION=${TAG_NAME}" >> $GITHUB_ENV
+          echo "Building Matt for tag version: ${TAG_NAME}"
+
+      - name: Build Multi-Platform Binaries with Auto-Version Injection
         run: |
           mkdir -p dist
-          GOOS=linux GOARCH=amd64 go build -o dist/matt-linux-amd64 ./cmd/matt
-          GOOS=linux GOARCH=arm64 go build -o dist/matt-linux-arm64 ./cmd/matt
-          GOOS=darwin GOARCH=amd64 go build -o dist/matt-darwin-amd64 ./cmd/matt
-          GOOS=darwin GOARCH=arm64 go build -o dist/matt-darwin-arm64 ./cmd/matt
-          GOOS=windows GOARCH=amd64 go build -o dist/matt-windows-amd64.exe ./cmd/matt
+          LDFLAGS="-X github.com/Chintanpatel24/Matt/internal/version.Version=${{ env.VERSION }}"
+          
+          GOOS=linux GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o dist/matt-linux-amd64 ./cmd/matt
+          GOOS=linux GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o dist/matt-linux-arm64 ./cmd/matt
+          GOOS=darwin GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o dist/matt-darwin-amd64 ./cmd/matt
+          GOOS=darwin GOARCH=arm64 go build -ldflags "${LDFLAGS}" -o dist/matt-darwin-arm64 ./cmd/matt
+          GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o dist/matt-windows-amd64.exe ./cmd/matt
 
-      - name: Upload Binaries Artifact
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: matt-binaries
+          name: matt-binaries-${{ env.VERSION }}
           path: dist/*
+
+      - name: Create GitHub Release with Binaries
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Matt ${{ env.VERSION }}
+          tag_name: ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            dist/matt-linux-amd64
+            dist/matt-linux-arm64
+            dist/matt-darwin-amd64
+            dist/matt-darwin-arm64
+            dist/matt-windows-amd64.exe
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
