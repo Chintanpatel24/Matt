@@ -1289,6 +1289,12 @@ func (m AppModel) View() string {
 		leftItems = append(leftItems, m.Styles.ScrollIndicator.Render(fmt.Sprintf("  ▼ %d more below", len(m.LeftEntries)-lEndIdx)))
 	}
 
+	// Pad Left Pane to exact height to prevent layout shifts
+	targetLeftHeight := mainHeight - 2
+	for len(leftItems) < targetLeftHeight {
+		leftItems = append(leftItems, m.Styles.Item.Render(strings.Repeat(" ", max(0, leftWidth-2))))
+	}
+
 	leftContent := strings.Join(leftItems, "\n")
 	leftBox := leftBorderStyle.Width(leftWidth).Height(mainHeight).Render(leftContent)
 
@@ -1355,6 +1361,12 @@ func (m AppModel) View() string {
 		centerItems = append(centerItems, m.Styles.ScrollIndicator.Render(fmt.Sprintf("  ▼ %d more below", len(m.CenterEntries)-cEndIdx)))
 	}
 
+	// Pad Center Pane to exact height to prevent layout shifts
+	targetCenterHeight := mainHeight - 2
+	for len(centerItems) < targetCenterHeight {
+		centerItems = append(centerItems, m.Styles.Item.Render(strings.Repeat(" ", max(0, centerWidth-2))))
+	}
+
 	centerContent := strings.Join(centerItems, "\n")
 	centerBox := centerBorderStyle.Width(centerWidth).Height(mainHeight).Render(centerContent)
 
@@ -1395,6 +1407,13 @@ func (m AppModel) View() string {
 	if rEndIdx < len(previewLines) {
 		rightItems = append(rightItems, m.Styles.ScrollIndicator.Render("  ▼ scroll down"))
 	}
+
+	// Pad Preview Pane to exact height to prevent layout shifts
+	targetRightHeight := previewHeight - 2
+	for len(rightItems) < targetRightHeight {
+		rightItems = append(rightItems, m.Styles.Item.Render(strings.Repeat(" ", max(0, rightWidth-2))))
+	}
+
 	rightContent := strings.Join(rightItems, "\n")
 	rightPreviewBox := rightBorderStyle.Width(rightWidth).Height(previewHeight).Render(rightContent)
 
