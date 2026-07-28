@@ -52,6 +52,13 @@ const (
 	InputRename
 )
 
+// UndoAction describes an action that can be reverted.
+type UndoAction struct {
+	Type   string // "rename", "create", "delete", "paste", "archive"
+	Source string
+	Dest   string
+}
+
 // AppModel is the primary Elm Architecture state for Matt.
 type AppModel struct {
 	State         AppState
@@ -89,8 +96,14 @@ type AppModel struct {
 	HistorySaved  string
 
 	// Clipboard for copy/paste
-	ClipboardPath string
-	ClipboardOp   string // "copy" or "cut"
+	ClipboardPaths []string // Supports multi-selection copying/cutting
+	ClipboardOp    string   // "copy" or "cut"
+
+	// Multi-select state
+	MultiSelect map[string]bool // Maps file path to true if selected
+
+	// Undo / Redo stack
+	UndoStack []UndoAction
 
 	// Bookmarks
 	Bookmarks      []string
@@ -137,21 +150,24 @@ func NewAppModel(cfg config.Config, initialDir string) AppModel {
 	startup := NewStartupModel(cfg, absDir)
 
 	m := AppModel{
-		State:        StateStartup,
-		Config:       cfg,
-		Styles:       styles,
-		CurrentDir:   absDir,
-		Focus:        PaneLeft,
-		TermInput:    ti,
-		FilterInput:  fi,
-		PromptInput:  pi,
-		IsFiltering:  false,
-		Startup:      startup,
-		CmdHistory:   config.LoadHistory(),
-		HistoryIdx:   -1,
-		Bookmarks:    config.LoadBookmarks(),
-		LastCmdOut:   "Ready. Press [Tab] focus • [/] filter • [Alt+D] analyzer • [:] cmd • [.] hidden",
-		StatusMsg:    fmt.Sprintf("Matt %s — Matt Black Terminal File Manager", version.Version),
+		State:          StateStartup,
+		Config:         cfg,
+		Styles:         styles,
+		CurrentDir:     absDir,
+		Focus:          PaneLeft,
+		TermInput:      ti,
+		FilterInput:    fi,
+		PromptInput:    pi,
+		IsFiltering:    false,
+		Startup:        startup,
+		CmdHistory:     config.LoadHistory(),
+		HistoryIdx:     -1,
+		Bookmarks:      config.LoadBookmarks(),
+		MultiSelect:    make(map[string]bool),
+		UndoStack:      []UndoAction{},
+		ClipboardPaths: []string{},
+		LastCmdOut:     "Ready. Press [Tab] focus • [/] filter • [Alt+D] analyzer • [:] cmd • [.] hidden",
+		StatusMsg:      fmt.Sprintf("Matt %s — Matt Black Terminal File Manager", version.Version),
 	}
 
 	m.refreshLeftEntries()
@@ -404,6 +420,7 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 								m.LastCmdOut = m.Styles.ErrorText.Render(fmt.Sprintf("✗ Error renaming: %v", err))
 							} else {
 								m.LastCmdOut = m.Styles.SuccessText.Render(fmt.Sprintf("✓ Renamed '%s' → '%s'", target.Name, name))
+								m.UndoStack = append(m.UndoStack, UndoAction{Type: "rename", Source: newPath, Dest: target.Path})
 							}
 						}
 					}
@@ -603,27 +620,57 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.StatusMsg = "✓ Refreshed view"
 				return m, nil
 
-			case "d":
+			case " ":
 				if len(m.LeftEntries) > 0 {
 					target := m.LeftEntries[m.LeftCursor]
 					if target.Name != ".." {
-						m.Dialog = ui.NewPermissionDialog(
-							"Delete Confirmation",
-							fmt.Sprintf("Are you sure you want to delete '%s'?", target.Name),
-							func() {
-								err := os.RemoveAll(target.Path)
-								if err != nil {
-									m.LastCmdOut = m.Styles.ErrorText.Render(fmt.Sprintf("✗ Error deleting %s: %v", target.Name, err))
-								} else {
-									m.LastCmdOut = m.Styles.SuccessText.Render(fmt.Sprintf("✓ Deleted '%s'", target.Name))
-									m.refreshLeftEntries()
-									m.refreshCenterAndRight()
-								}
-							},
-						)
-						m.State = StateDialog
-						return m, nil
+						if m.MultiSelect[target.Path] {
+							delete(m.MultiSelect, target.Path)
+						} else {
+							m.MultiSelect[target.Path] = true
+						}
+						m.StatusMsg = fmt.Sprintf("Selected: %d items", len(m.MultiSelect))
 					}
+				}
+				return m, nil
+
+			case "d":
+				var targets []string
+				if len(m.MultiSelect) > 0 {
+					for p := range m.MultiSelect {
+						targets = append(targets, p)
+					}
+				} else if len(m.LeftEntries) > 0 {
+					target := m.LeftEntries[m.LeftCursor]
+					if target.Name != ".." {
+						targets = append(targets, target.Path)
+					}
+				}
+
+				if len(targets) > 0 {
+					confirmMsg := fmt.Sprintf("Are you sure you want to delete %d items?", len(targets))
+					if len(targets) == 1 {
+						confirmMsg = fmt.Sprintf("Are you sure you want to delete '%s'?", filepath.Base(targets[0]))
+					}
+					m.Dialog = ui.NewPermissionDialog(
+						"Delete Confirmation",
+						confirmMsg,
+						func() {
+							deletedCount := 0
+							for _, targetPath := range targets {
+								err := os.RemoveAll(targetPath)
+								if err == nil {
+									deletedCount++
+								}
+							}
+							m.LastCmdOut = m.Styles.SuccessText.Render(fmt.Sprintf("✓ Deleted %d items", deletedCount))
+							m.MultiSelect = make(map[string]bool)
+							m.refreshLeftEntries()
+							m.refreshCenterAndRight()
+						},
+					)
+					m.State = StateDialog
+					return m, nil
 				}
 
 			case "n":
@@ -655,54 +702,177 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					}
 				}
 
-			case "c":
-				if len(m.LeftEntries) > 0 {
+			case "c", "x":
+				opName := "copy"
+				if msg.String() == "x" {
+					opName = "cut"
+				}
+				m.ClipboardOp = opName
+				m.ClipboardPaths = []string{}
+				
+				if len(m.MultiSelect) > 0 {
+					for path := range m.MultiSelect {
+						m.ClipboardPaths = append(m.ClipboardPaths, path)
+					}
+				} else if len(m.LeftEntries) > 0 {
 					target := m.LeftEntries[m.LeftCursor]
 					if target.Name != ".." {
-						m.ClipboardPath = target.Path
-						m.ClipboardOp = "copy"
-						m.StatusMsg = fmt.Sprintf("Copied: %s", target.Name)
+						m.ClipboardPaths = append(m.ClipboardPaths, target.Path)
 					}
 				}
-				return m, nil
-
-			case "x":
-				if len(m.LeftEntries) > 0 {
-					target := m.LeftEntries[m.LeftCursor]
-					if target.Name != ".." {
-						m.ClipboardPath = target.Path
-						m.ClipboardOp = "cut"
-						m.StatusMsg = fmt.Sprintf("Cut: %s", target.Name)
-					}
+				
+				if len(m.ClipboardPaths) > 0 {
+					m.StatusMsg = fmt.Sprintf("Clipboard: %d items marked for %s", len(m.ClipboardPaths), opName)
+				} else {
+					m.StatusMsg = "Nothing selected to copy/cut"
 				}
 				return m, nil
 
 			case "p":
-				if m.ClipboardPath != "" {
-					srcName := filepath.Base(m.ClipboardPath)
-					destPath := filepath.Join(m.CurrentDir, srcName)
-					if m.ClipboardOp == "copy" {
-						copyCmd := exec.Command("cp", "-r", m.ClipboardPath, destPath)
-						err := copyCmd.Run()
-						if err != nil {
-							m.LastCmdOut = m.Styles.ErrorText.Render(fmt.Sprintf("✗ Copy failed: %v", err))
-						} else {
-							m.LastCmdOut = m.Styles.SuccessText.Render(fmt.Sprintf("✓ Pasted '%s'", srcName))
+				if len(m.ClipboardPaths) > 0 {
+					successCount := 0
+					for _, src := range m.ClipboardPaths {
+						srcName := filepath.Base(src)
+						dest := filepath.Join(m.CurrentDir, srcName)
+						
+						var err error
+						if m.ClipboardOp == "copy" {
+							err = exec.Command("cp", "-r", src, dest).Run()
+							if err == nil {
+								m.UndoStack = append(m.UndoStack, UndoAction{Type: "paste", Dest: dest})
+							}
+						} else { // cut
+							err = os.Rename(src, dest)
+							if err == nil {
+								m.UndoStack = append(m.UndoStack, UndoAction{Type: "rename", Source: dest, Dest: src})
+							}
 						}
-					} else if m.ClipboardOp == "cut" {
-						err := os.Rename(m.ClipboardPath, destPath)
-						if err != nil {
-							m.LastCmdOut = m.Styles.ErrorText.Render(fmt.Sprintf("✗ Move failed: %v", err))
-						} else {
-							m.LastCmdOut = m.Styles.SuccessText.Render(fmt.Sprintf("✓ Moved '%s'", srcName))
-							m.ClipboardPath = ""
-							m.ClipboardOp = ""
+						if err == nil {
+							successCount++
 						}
+					}
+					
+					m.LastCmdOut = m.Styles.SuccessText.Render(fmt.Sprintf("✓ Pasted %d/%d items", successCount, len(m.ClipboardPaths)))
+					if m.ClipboardOp == "cut" {
+						m.ClipboardPaths = []string{}
+						m.ClipboardOp = ""
+					}
+					m.MultiSelect = make(map[string]bool)
+					m.refreshLeftEntries()
+					m.refreshCenterAndRight()
+				} else {
+					m.StatusMsg = "Clipboard is empty. Copy/cut first."
+				}
+				return m, nil
+
+			case "u":
+				if len(m.UndoStack) > 0 {
+					action := m.UndoStack[len(m.UndoStack)-1]
+					m.UndoStack = m.UndoStack[:len(m.UndoStack)-1]
+					
+					var err error
+					switch action.Type {
+					case "rename":
+						err = os.Rename(action.Source, action.Dest)
+						if err == nil {
+							m.StatusMsg = fmt.Sprintf("Undone: rename of %s", filepath.Base(action.Source))
+						}
+					case "paste":
+						err = os.RemoveAll(action.Dest)
+						if err == nil {
+							m.StatusMsg = fmt.Sprintf("Undone: pasted %s", filepath.Base(action.Dest))
+						}
+					}
+					if err != nil {
+						m.StatusMsg = fmt.Sprintf("Undo failed: %v", err)
 					}
 					m.refreshLeftEntries()
 					m.refreshCenterAndRight()
 				} else {
-					m.StatusMsg = "Nothing in clipboard. Use [c] copy or [x] cut first."
+					m.StatusMsg = "Nothing to undo"
+				}
+				return m, nil
+
+			case "z":
+				var targets []string
+				if len(m.MultiSelect) > 0 {
+					for p := range m.MultiSelect {
+						targets = append(targets, p)
+					}
+				} else if len(m.LeftEntries) > 0 {
+					target := m.LeftEntries[m.LeftCursor]
+					if target.Name != ".." {
+						targets = append(targets, target.Path)
+					}
+				}
+				
+				if len(targets) > 0 {
+					zipPath := filepath.Join(m.CurrentDir, "archive.zip")
+					args := []string{"-r", zipPath}
+					for _, t := range targets {
+						args = append(args, filepath.Base(t))
+					}
+					cmd := exec.Command("zip", args...)
+					cmd.Dir = m.CurrentDir
+					err := cmd.Run()
+					if err != nil {
+						m.LastCmdOut = m.Styles.ErrorText.Render(fmt.Sprintf("✗ Zip failed: %v (make sure zip is installed)", err))
+					} else {
+						m.LastCmdOut = m.Styles.SuccessText.Render("✓ Created archive.zip")
+						m.MultiSelect = make(map[string]bool)
+						m.refreshLeftEntries()
+						m.refreshCenterAndRight()
+					}
+				} else {
+					m.StatusMsg = "Nothing selected to compress"
+				}
+				return m, nil
+
+			case "Z":
+				if len(m.LeftEntries) > 0 {
+					target := m.LeftEntries[m.LeftCursor]
+					if target.Name != ".." {
+						ext := strings.ToLower(filepath.Ext(target.Name))
+						var cmd *exec.Cmd
+						if ext == ".zip" {
+							cmd = exec.Command("unzip", target.Path, "-d", m.CurrentDir)
+						} else if ext == ".tar" || ext == ".tar.gz" || ext == ".tgz" {
+							cmd = exec.Command("tar", "-xvf", target.Path, "-C", m.CurrentDir)
+						}
+						
+						if cmd != nil {
+							err := cmd.Run()
+							if err != nil {
+								m.LastCmdOut = m.Styles.ErrorText.Render(fmt.Sprintf("✗ Extraction failed: %v", err))
+							} else {
+								m.LastCmdOut = m.Styles.SuccessText.Render(fmt.Sprintf("✓ Extracted %s successfully", target.Name))
+								m.refreshLeftEntries()
+								m.refreshCenterAndRight()
+							}
+						} else {
+							m.StatusMsg = "Not a supported archive (.zip, .tar, .tar.gz)"
+						}
+					}
+				}
+				return m, nil
+
+			case "o", "O":
+				if len(m.LeftEntries) > 0 {
+					target := m.LeftEntries[m.LeftCursor]
+					if !target.IsDir {
+						var cmd *exec.Cmd
+						macCheck := exec.Command("uname")
+						out, _ := macCheck.Output()
+						if strings.Contains(strings.ToLower(string(out)), "darwin") {
+							cmd = exec.Command("open", target.Path)
+						} else {
+							cmd = exec.Command("xdg-open", target.Path)
+						}
+						if cmd != nil {
+							_ = cmd.Start()
+							m.StatusMsg = fmt.Sprintf("Opened: %s", target.Name)
+						}
+					}
 				}
 				return m, nil
 
@@ -959,21 +1129,48 @@ func (m AppModel) renderFileItem(entry filetree.FileEntry, idx int, cursor int, 
 		sizeStr = entry.FormatSize()
 	}
 
+	// Multi-select prefix
+	selectPrefix := "  "
+	if m.MultiSelect[entry.Path] {
+		selectPrefix = "✓ "
+	}
+
+	// Git status styling
+	gitSuffix := ""
+	unrenderedGitSuffix := ""
+	if entry.GitStatus != "" {
+		unrenderedGitSuffix = " [" + entry.GitStatus + "]"
+		switch entry.GitStatus {
+		case "M":
+			gitSuffix = m.Styles.GitModified.Render(" [M]")
+		case "A":
+			gitSuffix = m.Styles.GitAdded.Render(" [A]")
+		case "?":
+			gitSuffix = m.Styles.GitUntracked.Render(" [?]")
+		default:
+			gitSuffix = m.Styles.MutedText.Render(fmt.Sprintf(" [%s]", entry.GitStatus))
+		}
+	}
+
 	// Build the item text
-	nameDisplay := fmt.Sprintf("%s %s", icon, name)
+	nameDisplay := fmt.Sprintf("%s%s %s", selectPrefix, icon, name)
 	if entry.IsSymlink && entry.SymlinkTarget != "" {
 		nameDisplay += fmt.Sprintf(" → %s", entry.SymlinkTarget)
 	}
 
 	// Calculate available width for name (leave room for size)
 	availWidth := max(10, paneWidth-len(sizeStr)-6)
-	if len(nameDisplay) > availWidth {
-		nameDisplay = nameDisplay[:availWidth-1] + "…"
+	unrenderedTotal := len(nameDisplay) + len(unrenderedGitSuffix)
+	if unrenderedTotal > availWidth {
+		allowedNameLen := availWidth - len(unrenderedGitSuffix)
+		if len(nameDisplay) > allowedNameLen && allowedNameLen > 3 {
+			nameDisplay = nameDisplay[:allowedNameLen-1] + "…"
+		}
 	}
 
 	// Pad to fill width
-	gap := max(0, paneWidth-len(nameDisplay)-len(sizeStr)-4)
-	line := nameDisplay + strings.Repeat(" ", gap) + sizeStr
+	gap := max(0, paneWidth-len(nameDisplay)-len(unrenderedGitSuffix)-len(sizeStr)-4)
+	line := nameDisplay + gitSuffix + strings.Repeat(" ", gap) + sizeStr
 
 	if idx == cursor {
 		prefix := "  "
@@ -1237,8 +1434,12 @@ func (m AppModel) View() string {
 
 	var termSb strings.Builder
 	termSb.WriteString(termTitleStyle.Render(" Terminal [':' to focus] "))
-	if m.ClipboardPath != "" {
-		termSb.WriteString("  " + m.Styles.WarningText.Render(fmt.Sprintf("📋 %s: %s", m.ClipboardOp, filepath.Base(m.ClipboardPath))))
+	if len(m.ClipboardPaths) > 0 {
+		clipboardDesc := filepath.Base(m.ClipboardPaths[0])
+		if len(m.ClipboardPaths) > 1 {
+			clipboardDesc = fmt.Sprintf("%d items", len(m.ClipboardPaths))
+		}
+		termSb.WriteString("  " + m.Styles.WarningText.Render(fmt.Sprintf("📋 %s: %s", m.ClipboardOp, clipboardDesc)))
 	}
 	termSb.WriteString("\n")
 	if m.LastCmdOut != "" {

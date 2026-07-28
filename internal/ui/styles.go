@@ -42,6 +42,9 @@ type Styles struct {
 	WarningText       lipgloss.Style
 	SizeColumn        lipgloss.Style
 	HeaderPathSep     lipgloss.Style
+	GitModified       lipgloss.Style
+	GitAdded          lipgloss.Style
+	GitUntracked      lipgloss.Style
 }
 
 // NewStyles constructs all styles using the Lite Grey & Matt Black theme configuration.
@@ -231,5 +234,17 @@ func NewStyles(cfg config.Config) Styles {
 		HeaderPathSep: lipgloss.NewStyle().
 			Foreground(lipgloss.Color(t.TextMuted)).
 			Background(lipgloss.Color(t.BgSurface)),
+
+		GitModified: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.Warning)).
+			Bold(true),
+
+		GitAdded: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.Success)).
+			Bold(true),
+
+		GitUntracked: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.TextMuted)).
+			Italic(true),
 	}
 }

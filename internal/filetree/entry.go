@@ -27,6 +27,7 @@ type FileEntry struct {
 	Owner         string
 	Group         string
 	SymlinkTarget string
+	GitStatus     string // e.g. "M", "A", "?", or ""
 }
 
 // NewFileEntry creates a FileEntry struct from os.FileInfo.

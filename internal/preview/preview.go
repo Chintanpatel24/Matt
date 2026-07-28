@@ -84,6 +84,30 @@ func GeneratePreview(entry filetree.FileEntry, maxWidth, maxHeight int) PreviewR
 		}
 	}
 
+	// Rich preview for Markdown
+	if ext == ".md" || ext == ".markdown" {
+		formatted := FormatMarkdown(string(contentBytes))
+		lines := strings.Split(formatted, "\n")
+		return PreviewResult{
+			Content:   formatted,
+			LineCount: len(lines),
+			IsBinary:  false,
+			Info:      "Rich Markdown",
+		}
+	}
+
+	// Rich preview for CSV
+	if ext == ".csv" {
+		formatted := FormatCSV(string(contentBytes), maxWidth)
+		lines := strings.Split(formatted, "\n")
+		return PreviewResult{
+			Content:   formatted,
+			LineCount: len(lines),
+			IsBinary:  false,
+			Info:      "Rich CSV Table",
+		}
+	}
+
 	return highlightText(entry, string(contentBytes), maxWidth, maxHeight)
 }
 

@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/Chintanpatel24/Matt/internal/git"
 )
 
 // ReadDir reads directory content and returns sorted FileEntry slice.
@@ -18,6 +20,8 @@ func ReadDir(dirPath string, showHidden bool) ([]FileEntry, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	gitStatuses := git.GetGitStatus(absPath)
 
 	var results []FileEntry
 
@@ -48,6 +52,9 @@ func ReadDir(dirPath string, showHidden bool) ([]FileEntry, error) {
 		}
 
 		fe := NewFileEntry(absPath, info)
+		if status, exists := gitStatuses[fe.Name]; exists {
+			fe.GitStatus = status
+		}
 		if fe.IsDir {
 			dirs = append(dirs, fe)
 		} else {
