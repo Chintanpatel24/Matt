@@ -32,7 +32,3 @@ By verifying your code first, maintainers can easily evaluate and merge your pul
 2. Make your changes and write tests if applicable.
 3. Verify that all linting, vetting, testing, and building checks pass cleanly.
 4. Push your branch and submit a Pull Request.
-
-## Code of Conduct
-
-Please be respectful and constructive in all communication channels.
