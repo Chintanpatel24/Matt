@@ -20,12 +20,172 @@
 [![GitHub Stars](https://img.shields.io/github/stars/Chintanpatel24/Matt?style=flat&color=eab308)](https://github.com/Chintanpatel24/Matt)
 </div>
 
-- **Matt** is a fast, keyboard & mouse driven, modern terminal file manager featuring a **Matt Black** design aesthetic, a **3-column pane system**, an **interactive bottom command line runner**, **disk space analyzer**, **live fuzzy finder**, **ASCII image previews**, and a built-in **permission approval framework**.
+- **Matt** is a fast, keyboard-driven, modern terminal file manager featuring a **Matt Black** design aesthetic. Built with Go and [Bubble Tea](https://github.com/charmbracelet/bubbletea), it offers a **3-column pane system**, **async disk analyzer**, **live fuzzy finder**, **file operations**, **bookmarks**, **command history**, **syntax-highlighted previews**, and a **premium dark UI** with scroll indicators, zebra-striping, and breadcrumb navigation.
 
 <div align=center>
 <img width="1000" alt="matttt" src="https://github.com/user-attachments/assets/36131f34-ebc1-4478-a347-75c983a51efd" />
 </div>
 
+##  Key Features
+
+### Premium UI
+- **Matt Black Aesthetic** - Custom dark palette with onyx backgrounds, charcoal borders, and lite grey accents
+- **3-Column Split View** - Navigation tree, explorer, and preview/metadata inspector
+- **Breadcrumb Path Bar** - Interactive breadcrumb navigation in the header (`~ ❯ Projects ❯ Matt`)
+- **Scroll Indicators** - Visual `▲`/`▼` arrows with item counts when content overflows
+- **Zebra-Striping** - Alternating row backgrounds for better readability
+- **Selection Accent Bar** - `▌` accent indicator on the active selection
+- **Focus Indicators** - `◉` active / `○` inactive pane markers
+- **Mode Indicator** - Shows current mode (`NORMAL` / `FILTER` / `COMMAND`)
+
+### File Management
+- **Create Files & Folders** - `n` for new file, `N` for new folder
+- **Copy / Cut / Paste** - `c` copy, `x` cut, `p` paste
+- **Rename** - `m` to move/rename with inline prompt
+- **Delete** - `d` with confirmation dialog
+- **Symlink Resolution** - Shows symlink targets with `→` notation
+
+### Navigation & Search
+- **Live Fuzzy Search** - Press `/` for instant fuzzy filtering
+- **Bookmarks** - `B` to bookmark, `b` to jump to saved locations
+- **Quick Jump** - `g` to first item, `G` to last item
+- **Vim-Style Navigation** - `h/j/k/l` or arrow keys
+
+### Async Disk Analyzer
+- **Non-Blocking Analysis** - `Alt+D` runs disk scan in background (no more UI freezing!)
+- **Visual Progress Bars** - `██████░░ 75%` percentage breakdown
+- **Sort Toggle** - Press `s` to toggle between size and name sorting
+- **Full Scrolling** - Navigate large directory analyses with `▲`/`▼` indicators
+
+### Integrated Terminal
+- **Shell Command Execution** - Run any command from the bottom pane
+- **Command History** - `↑`/`↓` arrow keys cycle through previous commands
+- **Smart `cd`** - Syncs all 3 panes when changing directories
+- **Config Aliases** - Custom shortcuts like `ll`, `findbig`, `sysinfo`
+- **Permission Prompts** - Safe confirmation for destructive operations
+
+### Preview & Inspection
+- **Syntax Highlighting** - Powered by Chroma with line numbers
+- **ASCII Image Preview** - Renders `.png`, `.jpg`, `.gif` as ASCII art
+- **Binary Hex View** - Hex dump for binary files
+- **File Metadata Inspector** - Permissions, owner, size, timestamps
+
+---
+
+## Installation
+
+### Quick One-Liner
+
+#### Linux / macOS
+```bash
+curl -fsSL https://raw.githubusercontent.com/Chintanpatel24/Matt/main/install.sh | bash
+```
+
+Or using `wget`:
+```bash
+wget -qO- https://raw.githubusercontent.com/Chintanpatel24/Matt/main/install.sh | bash
+```
+
+#### Windows (PowerShell)
+```powershell
+iwr -useb https://raw.githubusercontent.com/Chintanpatel24/Matt/main/install.ps1 | iex
+```
+
+### Clone & Build
+```bash
+git clone https://github.com/Chintanpatel24/Matt.git
+cd Matt
+make build
+make install
+```
+
+### Updating
+```bash
+curl -fsSL https://raw.githubusercontent.com/Chintanpatel24/Matt/main/update.sh | bash
+```
+
+---
+
+## Keyboard Controls
+
+### Navigation
+| Key | Description |
+|:---|:---|
+| `↑` / `↓` (`k` / `j`) | Navigate files/directories in focused pane |
+| `→` / `Enter` (`l`) | Open folder / expand directory |
+| `←` (`h`) | Go up to parent directory |
+| `Tab` / `Shift+Tab` | Cycle focus between panes & terminal |
+| `g` | Jump to first item in list |
+| `G` | Jump to last item in list |
+| `/` | Live fuzzy search & filter |
+| `.` | Toggle hidden files |
+| `r` | Refresh directory view |
+
+### File Operations
+| Key | Description |
+|:---|:---|
+| `n` | Create new file (enter name in prompt) |
+| `N` | Create new folder (enter name in prompt) |
+| `m` | Rename/move selected item |
+| `c` | Copy selected item to clipboard |
+| `x` | Cut selected item to clipboard |
+| `p` | Paste clipboard item into current directory |
+| `d` | Delete selected item (with confirmation) |
+
+### Tools & Navigation
+| Key | Description |
+|:---|:---|
+| `Alt+D` | Toggle async Disk Space Analyzer |
+| `b` | Open bookmarks list |
+| `B` | Bookmark current directory |
+| `:` | Focus bottom terminal / run shell commands |
+| `↑` / `↓` (in terminal) | Browse command history |
+| `s` (in analyzer) | Toggle sort by size/name |
+| `Esc` | Close modal / unfocus mode |
+| `q` / `Ctrl+C` | Quit Matt |
+
+---
+
+## Configuration
+
+Matt reads configuration from `~/.config/matt/config.json`. Customize themes, aliases, and more:
+
+```json
+{
+  "show_hidden": false,
+  "aliases": {
+    "ll": "ls -la",
+    "findbig": "find . -type f -size +10M",
+    "count": "find . -type f | wc -l",
+    "sysinfo": "uname -a && uptime"
+  },
+  "theme": {
+    "bg": "#09090b",
+    "bg_surface": "#18181b",
+    "bg_zebra": "#0f0f12",
+    "border": "#27272a",
+    "border_active": "#e4e4e7",
+    "text_primary": "#f8fafc",
+    "text_muted": "#a1a1aa",
+    "directory": "#38bdf8",
+    "executable": "#34d399",
+    "selection": "#27272a",
+    "accent": "#e4e4e7",
+    "error": "#f87171",
+    "warning": "#fbbf24",
+    "success": "#4ade80"
+  }
+}
+```
+
+### Data Files
+| File | Purpose |
+|:---|:---|
+| `~/.config/matt/config.json` | Main configuration & theme |
+| `~/.config/matt/bookmarks.json` | Saved directory bookmarks |
+| `~/.config/matt/history.json` | Command history (max 100 entries) |
+
+<!--
 ## Installation Options
 
 ### Option 1: Quick One-Liner Commands
