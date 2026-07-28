@@ -10,7 +10,7 @@
   ░  ░      ░  ▒   ▒▒ ░   ░        ░    
   ░      ░     ░   ▒    ░        ░      
          ░         ░  ░
-  -->
+   -->
 </div>
 <div align=center>
  
@@ -20,7 +20,7 @@
 [![GitHub Stars](https://img.shields.io/github/stars/Chintanpatel24/Matt?style=flat&color=eab308)](https://github.com/Chintanpatel24/Matt)
 </div>
 
-- **Matt** is a fast, keyboard-driven, modern terminal file manager featuring a **Matt Black** design aesthetic. Built with Go and [Bubble Tea](https://github.com/charmbracelet/bubbletea), it offers a **3-column pane system**, **async disk analyzer**, **live fuzzy finder**, **file operations**, **bookmarks**, **command history**, **syntax-highlighted previews**, and a **premium dark UI** with scroll indicators, zebra-striping, and breadcrumb navigation.
+- **Matt** is a fast, keyboard-driven, modern terminal file manager featuring a **Matt Black** design aesthetic. Built with Go and Bubble Tea, it offers a 3-column pane system, async disk analyzer, live fuzzy finder, file operations, bookmarks, command history, syntax-highlighted previews, and a premium dark UI with scroll indicators, zebra-striping, and breadcrumb navigation.
 
 <div align=center>
   <table>
@@ -35,47 +35,64 @@
   </table>
 </div>
 
-##  Key Features
+---
+
+## Key Features
 
 ### Premium UI
-- **Matt Black Aesthetic** - Custom dark palette with onyx backgrounds, charcoal borders, and lite grey accents
+- **Matt Black Aesthetic** - Custom dark palette with onyx backgrounds, charcoal borders, and high-contrast grey accents
+- **Solid Takeover Background** - Full terminal takeover layout prevents transparent patches and preserves background color consistency
 - **3-Column Split View** - Navigation tree, explorer, and preview/metadata inspector
-- **Breadcrumb Path Bar** - Interactive breadcrumb navigation in the header (`~ ❯ Projects ❯ Matt`)
-- **Scroll Indicators** - Visual `▲`/`▼` arrows with item counts when content overflows
+- **Breadcrumb Path Bar** - Interactive breadcrumb navigation in the header
+- **Scroll Indicators** - Visual arrows with item counts when content overflows
 - **Zebra-Striping** - Alternating row backgrounds for better readability
-- **Selection Accent Bar** - `▌` accent indicator on the active selection
-- **Focus Indicators** - `◉` active / `○` inactive pane markers
-- **Mode Indicator** - Shows current mode (`NORMAL` / `FILTER` / `COMMAND`)
+- **Selection Accent Bar** - Accent indicator on the active selection
+- **Focus Indicators** - Active / inactive pane markers
+- **Mode Indicator** - Shows current mode (NORMAL / FILTER / COMMAND)
 
-### File Management
-- **Create Files & Folders** - `n` for new file, `N` for new folder
-- **Copy / Cut / Paste** - `c` copy, `x` cut, `p` paste
-- **Rename** - `m` to move/rename with inline prompt
-- **Delete** - `d` with confirmation dialog
-- **Symlink Resolution** - Shows symlink targets with `→` notation
+### File Management & Bulk Operations
+- **Multi-Selection** - Press Space to select multiple files/directories, marked with a checkmark
+- **Bulk Operations** - Perform bulk copy (c), cut (x), paste (p), and delete (d) on all selected files simultaneously
+- **Create Files & Folders** - n for new file, N for new folder
+- **Rename** - m to move/rename with inline prompt
+- **Symlink Resolution** - Shows symlink targets
+- **Action Undo** - Press u to revert the last copy, paste, delete, or rename file action
+
+### Archive Management
+- **Zip Compression** - Press z to compress selected files/folders into a .zip archive
+- **Archive Extraction** - Press Z on an archive (.zip, .tar.gz, .tar, .tgz) to extract it inline instantly
 
 ### Navigation & Search
-- **Live Fuzzy Search** - Press `/` for instant fuzzy filtering
-- **Bookmarks** - `B` to bookmark, `b` to jump to saved locations
-- **Quick Jump** - `g` to first item, `G` to last item
-- **Vim-Style Navigation** - `h/j/k/l` or arrow keys
+- **Live Fuzzy Search** - Press / for instant fuzzy filtering
+- **Git Status Indicators** - Color-coded file list reflecting Git status:
+  - [M] (Yellow) - Modified files
+  - [A] (Green) - Staged/added files
+  - [?] (Gray) - Untracked files
+- **Bookmarks** - B to bookmark, b to jump to saved locations
+- **Quick Jump** - g to first item, G to last item
+- **Vim-Style Navigation** - h/j/k/l or arrow keys
 
 ### Async Disk Analyzer
-- **Non-Blocking Analysis** - `Alt+D` runs disk scan in background (no more UI freezing!)
-- **Visual Progress Bars** - `██████░░ 75%` percentage breakdown
-- **Sort Toggle** - Press `s` to toggle between size and name sorting
-- **Full Scrolling** - Navigate large directory analyses with `▲`/`▼` indicators
+- **Non-Blocking Analysis** - Alt+D runs disk scan in background (no more UI freezing!)
+- **Emoji-Free Layout** - Modern text-based tabular layout (DIR/FILE labels)
+- **Visual Progress Bars** - Percentage breakdown
+- **Sort Toggle** - Press s to toggle between size and name sorting
+- **Full Scrolling** - Navigate large directory analyses
 
-### Integrated Terminal
+### Integrated Terminal & Openers
+- **System Opener** - Press o or O on any file to open it with the default system association handler
 - **Shell Command Execution** - Run any command from the bottom pane
-- **Command History** - `↑`/`↓` arrow keys cycle through previous commands
-- **Smart `cd`** - Syncs all 3 panes when changing directories
-- **Config Aliases** - Custom shortcuts like `ll`, `findbig`, `sysinfo`
+- **Command History** - Up/Down arrow keys cycle through previous commands
+- **Smart cd** - Syncs all 3 panes when changing directories
+- **Config Aliases** - Custom shortcuts like ll, findbig, sysinfo
 - **Permission Prompts** - Safe confirmation for destructive operations
 
 ### Preview & Inspection
+- **Rich Previews** - Formatted previews for specific extensions:
+  - **Markdown (.md)** - Styled headers, styled bullet points, and code blocks
+  - **CSV (.csv)** - Structured, aligned, zebra-striped data table grid with column dividers
 - **Syntax Highlighting** - Powered by Chroma with line numbers
-- **ASCII Image Preview** - Renders `.png`, `.jpg`, `.gif` as ASCII art
+- **ASCII Image Preview** - Renders image formats as ASCII art
 - **Binary Hex View** - Hex dump for binary files
 - **File Metadata Inspector** - Permissions, owner, size, timestamps
 
@@ -90,7 +107,7 @@
 curl -fsSL https://raw.githubusercontent.com/Chintanpatel24/Matt/main/install.sh | bash
 ```
 
-Or using `wget`:
+Or using wget:
 ```bash
 wget -qO- https://raw.githubusercontent.com/Chintanpatel24/Matt/main/install.sh | bash
 ```
@@ -133,13 +150,18 @@ curl -fsSL https://raw.githubusercontent.com/Chintanpatel24/Matt/main/update.sh 
 ### File Operations
 | Key | Description |
 |:---|:---|
+| `Space` | Toggle multi-select checkbox on current item |
 | `n` | Create new file (enter name in prompt) |
 | `N` | Create new folder (enter name in prompt) |
 | `m` | Rename/move selected item |
-| `c` | Copy selected item to clipboard |
-| `x` | Cut selected item to clipboard |
-| `p` | Paste clipboard item into current directory |
-| `d` | Delete selected item (with confirmation) |
+| `c` | Copy selected item(s) to clipboard |
+| `x` | Cut selected item(s) to clipboard |
+| `p` | Paste clipboard item(s) into current directory |
+| `d` | Delete selected item(s) (with confirmation) |
+| `u` | Revert/Undo the last file action (copy, paste, move, delete) |
+| `z` | Compress selected item(s) into archive.zip |
+| `Z` | Extract selected archive inline |
+| `o` / `O` | Open file in system default application handler |
 
 ### Tools & Navigation
 | Key | Description |
@@ -173,13 +195,13 @@ Matt reads configuration from `~/.config/matt/config.json`. Customize themes, al
     "bg_surface": "#18181b",
     "bg_zebra": "#0f0f12",
     "border": "#27272a",
-    "border_active": "#e4e4e7",
+    "border_active": "#71717a",
     "text_primary": "#f8fafc",
     "text_muted": "#a1a1aa",
     "directory": "#38bdf8",
     "executable": "#34d399",
-    "selection": "#27272a",
-    "accent": "#e4e4e7",
+    "selection": "#3f3f46",
+    "accent": "#a1a1aa",
     "error": "#f87171",
     "warning": "#fbbf24",
     "success": "#4ade80"
@@ -194,125 +216,8 @@ Matt reads configuration from `~/.config/matt/config.json`. Customize themes, al
 | `~/.config/matt/bookmarks.json` | Saved directory bookmarks |
 | `~/.config/matt/history.json` | Command history (max 100 entries) |
 
-<!--
-## Installation Options
-
-### Option 1: Quick One-Liner Commands
-
-#### Linux / macOS
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Chintanpatel24/Matt/main/install.sh | bash
-```
-
-Or using `wget`:
-
-```bash
-wget -qO- https://raw.githubusercontent.com/Chintanpatel24/Matt/main/install.sh | bash
-```
-
-#### Windows (PowerShell)
-
-```powershell
-iwr -useb https://raw.githubusercontent.com/Chintanpatel24/Matt/main/install.ps1 | iex
-```
-
 ---
 
-### Option 2: Clone & Install Manually
+## License
 
-You can clone the repository and run `install.sh` or use `make`:
-
-```bash
-git clone https://github.com/Chintanpatel24/Matt.git
-cd Matt
-./install.sh
-```
-
-Or build with `make`:
-
-```bash
-make build
-make install
-```
-
----
-
-### Updating Matt
-
-To update Matt to the latest version at any time:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/Chintanpatel24/Matt/main/update.sh | bash
-```
-
-Or from inside your local cloned repository:
-
-```bash
-git pull
-./install.sh
-```
-
----
-
-## Key Features
-
-- **Sleek Matt Black Aesthetic**: Custom HSL dark palette (`#09090b` onyx background, `#18181b` pane surface, `#27272a` charcoal borders, matte gold accents).
-- **Startup Session Screen**: On launch, directly choose between opening current directory (`./`) or starting a fresh home session (`~/`).
-- **3-Column Split View**:
-  - **Left Pane (Navigation Tree)**: Directory listing with live fuzzy filtering (`/`) & mouse click support.
-  - **Center Pane (Explorer)**: Folder contents view with quick drill-down.
-  - **Right Pane (Code & Image Inspector)**: Real-time syntax-highlighted code inspector, image pixel previewer (`.png`, `.jpg`, `.gif`, `.webp`), binary hex view, and directory overview.
-- **Disk Space Analyzer (`Alt+D`)**: `ncdu`-style visual disk usage breakdown with percentage progress bars (`██████░░ 75%`).
-- **Instant Fuzzy Search (`/`)**: Live fuzzy filtering across file lists as you type.
-- **Config & Alias Extensions (`~/.config/matt/config.json`)**: Define custom command aliases (e.g. `ll`, `findbig`, `count`, `sysinfo`) and theme overrides.
-- **Integrated Bottom Terminal**:
-  - Direct shell command execution (`cd`, `touch`, `mkdir`, `rm`, `find`, `git`, `cat`, etc.).
-  - Executing `cd <path>` syncs all 3 upper panes immediately to the new directory!
-- **Interactive Permission Prompt System**: Safe confirmation dialogs for destructive operations (`rm`, `chmod`, `chown`) and feature approvals.
-
----
-
-## Keyboard & Mouse Controls
-
-| Key / Action | Description |
-| :--- | :--- |
-| `Up` / `Down` (`k` / `j`) | Navigate files/directories in focused pane |
-| `Right` / `Enter` (`l`) | Open folder / expand directory |
-| `Left` (`h`) | Go up to parent directory (`..`) |
-| `Alt+D` | Toggle Disk Space Analyzer view (`ncdu` style) |
-| `/` | Live fuzzy search & filter directory list |
-| `Left Mouse Click` | Focus pane & select item directly |
-| `Tab` / `Shift+Tab` | Cycle active focus between 3 upper panes & bottom terminal |
-| `:` | Focus bottom terminal / run shell commands & extension aliases |
-| `.` | Toggle hidden files |
-| `r` | Refresh directory view |
-| `d` | Delete highlighted file/folder (triggers permission dialog) |
-| `Esc` | Unfocus mode / dismiss modal |
-| `q` or `Ctrl+C` | Quit Matt |
-
----
-
-## Configuration & Extension API
-
-Matt automatically reads configuration from `~/.config/matt/config.json`. You can define custom shell command aliases and custom color schemes:
-
-```json
-{
-  "show_hidden": false,
-  "aliases": {
-    "ll": "ls -la",
-    "findbig": "find . -type f -size +10M",
-    "count": "find . -type f | wc -l",
-    "sysinfo": "uname -a && uptime"
-  },
-  "theme": {
-    "bg": "#09090b",
-    "bg_surface": "#18181b",
-    "border": "#27272a",
-    "border_active": "#eab308",
-    "text_primary": "#f4f4f5",
-    "accent": "#eab308"
-  }
-}
-```
+This project is licensed under the [MIT License](LICENSE).
