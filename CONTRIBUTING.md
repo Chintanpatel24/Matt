@@ -4,7 +4,7 @@ Thank you for your interest in contributing to Matt! We welcome contributions of
 
 ## AI Contributions Welcome
 
-We welcome contributions generated or assisted by AI tools (such as ChatGPT, Claude, GitHub Copilot, Gemini, etc.). However, to ensure high quality and make evaluation easy for maintainers, please adhere to the following rules:
+We welcome contributions generated or assisted by AI tools. However, to ensure high quality and make evaluation easy for maintainers, please adhere to the following rules:
 
 1. **Use Up-to-Date Code**: Ensure that your AI assistant is working with the latest code from the `main` branch. Avoid submitting legacy formats or outdated designs.
 2. **Test Before Submitting**: Check that your changes compile and run correctly on your local machine. Never submit code blindly without testing it yourself.
