@@ -28,6 +28,20 @@ type Styles struct {
 	ModalButtonActive lipgloss.Style
 	MetaLabel         lipgloss.Style
 	MetaValue         lipgloss.Style
+	ZebraItem         lipgloss.Style
+	ZebraDirItem      lipgloss.Style
+	ScrollIndicator   lipgloss.Style
+	Breadcrumb        lipgloss.Style
+	BreadcrumbActive  lipgloss.Style
+	ModeNormal        lipgloss.Style
+	ModeFilter        lipgloss.Style
+	ModeCommand       lipgloss.Style
+	AccentBar         lipgloss.Style
+	ErrorText         lipgloss.Style
+	SuccessText       lipgloss.Style
+	WarningText       lipgloss.Style
+	SizeColumn        lipgloss.Style
+	HeaderPathSep     lipgloss.Style
 }
 
 // NewStyles constructs all styles using the Lite Grey & Matt Black theme configuration.
@@ -146,5 +160,73 @@ func NewStyles(cfg config.Config) Styles {
 		MetaValue: lipgloss.NewStyle().
 			Background(lipgloss.Color(t.Bg)).
 			Foreground(lipgloss.Color(t.TextPrimary)),
+
+		ZebraItem: lipgloss.NewStyle().
+			Background(lipgloss.Color(t.BgZebra)).
+			Foreground(lipgloss.Color(t.TextPrimary)).
+			Padding(0, 1),
+
+		ZebraDirItem: lipgloss.NewStyle().
+			Background(lipgloss.Color(t.BgZebra)).
+			Foreground(lipgloss.Color(t.Directory)).
+			Bold(true),
+
+		ScrollIndicator: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.TextMuted)).
+			Background(lipgloss.Color(t.Bg)).
+			Align(lipgloss.Center),
+
+		Breadcrumb: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.TextMuted)).
+			Background(lipgloss.Color(t.BgSurface)),
+
+		BreadcrumbActive: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.Accent)).
+			Background(lipgloss.Color(t.BgSurface)).
+			Bold(true),
+
+		ModeNormal: lipgloss.NewStyle().
+			Background(lipgloss.Color(t.Accent)).
+			Foreground(lipgloss.Color(t.Bg)).
+			Bold(true).
+			Padding(0, 1),
+
+		ModeFilter: lipgloss.NewStyle().
+			Background(lipgloss.Color(t.Directory)).
+			Foreground(lipgloss.Color(t.Bg)).
+			Bold(true).
+			Padding(0, 1),
+
+		ModeCommand: lipgloss.NewStyle().
+			Background(lipgloss.Color(t.Success)).
+			Foreground(lipgloss.Color(t.Bg)).
+			Bold(true).
+			Padding(0, 1),
+
+		AccentBar: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.Accent)).
+			Background(lipgloss.Color(t.Selection)).
+			Bold(true),
+
+		ErrorText: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.Error)).
+			Background(lipgloss.Color(t.Bg)),
+
+		SuccessText: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.Success)).
+			Background(lipgloss.Color(t.Bg)),
+
+		WarningText: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.Warning)).
+			Background(lipgloss.Color(t.Bg)),
+
+		SizeColumn: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.TextMuted)).
+			Background(lipgloss.Color(t.Bg)).
+			Align(lipgloss.Right),
+
+		HeaderPathSep: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.TextMuted)).
+			Background(lipgloss.Color(t.BgSurface)),
 	}
 }

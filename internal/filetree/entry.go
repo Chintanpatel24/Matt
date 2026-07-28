@@ -13,19 +13,20 @@ import (
 
 // FileEntry represents a file or directory node in Matt file manager.
 type FileEntry struct {
-	Name        string
-	Path        string
-	IsDir       bool
-	IsSymlink   bool
-	Size        int64
-	Mode        os.FileMode
-	ModTime     time.Time
-	Extension   string
-	Icon        string
-	IsHidden    bool
-	Permissions string
-	Owner       string
-	Group       string
+	Name          string
+	Path          string
+	IsDir         bool
+	IsSymlink     bool
+	Size          int64
+	Mode          os.FileMode
+	ModTime       time.Time
+	Extension     string
+	Icon          string
+	IsHidden      bool
+	Permissions   string
+	Owner         string
+	Group         string
+	SymlinkTarget string
 }
 
 // NewFileEntry creates a FileEntry struct from os.FileInfo.
@@ -39,7 +40,7 @@ func NewFileEntry(dirPath string, info os.FileInfo) FileEntry {
 
 	owner, group := getOwnerGroup(info)
 
-	return FileEntry{
+	entry := FileEntry{
 		Name:        name,
 		Path:        fullPath,
 		IsDir:       isDir,
@@ -54,6 +55,17 @@ func NewFileEntry(dirPath string, info os.FileInfo) FileEntry {
 		Owner:       owner,
 		Group:       group,
 	}
+
+	// Resolve symlink target
+	if isSymlink {
+		entry.Icon = "🔗"
+		target, err := os.Readlink(fullPath)
+		if err == nil {
+			entry.SymlinkTarget = target
+		}
+	}
+
+	return entry
 }
 
 func getOwnerGroup(info os.FileInfo) (string, string) {
@@ -94,6 +106,14 @@ func (f FileEntry) FormatSize() string {
 // FormatModTime returns formatted modification date/time.
 func (f FileEntry) FormatModTime() string {
 	return f.ModTime.Format("2006-01-02 15:04")
+}
+
+// FormatSymlink returns a display string showing the symlink target.
+func (f FileEntry) FormatSymlink() string {
+	if f.IsSymlink && f.SymlinkTarget != "" {
+		return fmt.Sprintf("→ %s", f.SymlinkTarget)
+	}
+	return ""
 }
 
 // GetIcon returns an appropriate unicode icon for file types.

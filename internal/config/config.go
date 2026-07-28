@@ -11,6 +11,7 @@ import (
 type Theme struct {
 	Bg           string `json:"bg"`
 	BgSurface    string `json:"bg_surface"`
+	BgZebra      string `json:"bg_zebra"`
 	Border       string `json:"border"`
 	BorderActive string `json:"border_active"`
 	TextPrimary  string `json:"text_primary"`
@@ -20,6 +21,7 @@ type Theme struct {
 	Selection    string `json:"selection"`
 	Accent       string `json:"accent"`
 	Error        string `json:"error"`
+	Warning      string `json:"warning"`
 	Success      string `json:"success"`
 }
 
@@ -28,6 +30,7 @@ type Config struct {
 	ShowHidden bool              `json:"show_hidden"`
 	Aliases    map[string]string `json:"aliases"`
 	Theme      Theme             `json:"theme"`
+	Bookmarks  []string          `json:"bookmarks"`
 }
 
 // DefaultConfig returns the standard Matt Black configuration with Lite Grey accents.
@@ -41,18 +44,20 @@ func DefaultConfig() Config {
 			"sysinfo":  "uname -a && uptime",
 		},
 		Theme: Theme{
-			Bg:           "#09090b", // Deep Matte Black
-			BgSurface:    "#18181b", // Dark Surface
-			Border:       "#27272a", // Charcoal Border
-			BorderActive: "#e4e4e7", // Lite Grey Active Accent
-			TextPrimary:  "#f8fafc", // Pure White Primary Text
-			TextMuted:    "#a1a1aa", // Soft Grey Muted Text
-			Directory:    "#38bdf8", // Soft Cyan Directories
-			Executable:   "#34d399", // Emerald Executables
-			Selection:    "#27272a", // Active Selection Highlight
-			Accent:       "#e4e4e7", // Lite Grey Accent
-			Error:        "#f87171", // Red Error
-			Success:      "#4ade80", // Green Success
+			Bg:           "#09090b",
+			BgSurface:    "#18181b",
+			BgZebra:      "#0f0f12",
+			Border:       "#27272a",
+			BorderActive: "#e4e4e7",
+			TextPrimary:  "#f8fafc",
+			TextMuted:    "#a1a1aa",
+			Directory:    "#38bdf8",
+			Executable:   "#34d399",
+			Selection:    "#27272a",
+			Accent:       "#e4e4e7",
+			Error:        "#f87171",
+			Warning:      "#fbbf24",
+			Success:      "#4ade80",
 		},
 	}
 }
@@ -119,4 +124,107 @@ func ExpandPath(path string) string {
 		return filepath.Join(GetHomeDir(), path[2:])
 	}
 	return path
+}
+
+// LoadBookmarks loads bookmarks from ~/.config/matt/bookmarks.json
+func LoadBookmarks() []string {
+	configDir := filepath.Join(GetHomeDir(), ".config", "matt")
+	bookmarksPath := filepath.Join(configDir, "bookmarks.json")
+
+	data, err := os.ReadFile(bookmarksPath)
+	if err != nil {
+		return []string{}
+	}
+
+	var bookmarks []string
+	_ = json.Unmarshal(data, &bookmarks)
+	if bookmarks == nil {
+		bookmarks = []string{}
+	}
+	return bookmarks
+}
+
+// SaveBookmarks saves bookmarks to ~/.config/matt/bookmarks.json
+func SaveBookmarks(bookmarks []string) {
+	configDir := filepath.Join(GetHomeDir(), ".config", "matt")
+	bookmarksPath := filepath.Join(configDir, "bookmarks.json")
+
+	data, err := json.MarshalIndent(bookmarks, "", "  ")
+	if err == nil {
+		_ = os.MkdirAll(configDir, 0755)
+		_ = os.WriteFile(bookmarksPath, data, 0644)
+	}
+}
+
+// AddBookmark adds a path to bookmarks if not duplicate
+func AddBookmark(bookmarks []string, path string) []string {
+	for _, b := range bookmarks {
+		if b == path {
+			return bookmarks
+		}
+	}
+	return append(bookmarks, path)
+}
+
+// RemoveBookmark removes a bookmark by path
+func RemoveBookmark(bookmarks []string, path string) []string {
+	var result []string
+	for _, b := range bookmarks {
+		if b != path {
+			result = append(result, b)
+		}
+	}
+	if result == nil {
+		result = []string{}
+	}
+	return result
+}
+
+// LoadHistory loads history from ~/.config/matt/history.json
+func LoadHistory() []string {
+	configDir := filepath.Join(GetHomeDir(), ".config", "matt")
+	historyPath := filepath.Join(configDir, "history.json")
+
+	data, err := os.ReadFile(historyPath)
+	if err != nil {
+		return []string{}
+	}
+
+	var history []string
+	_ = json.Unmarshal(data, &history)
+	if history == nil {
+		history = []string{}
+	}
+	return history
+}
+
+// SaveHistory saves history to ~/.config/matt/history.json (max 100 entries)
+func SaveHistory(history []string) {
+	configDir := filepath.Join(GetHomeDir(), ".config", "matt")
+	historyPath := filepath.Join(configDir, "history.json")
+
+	if len(history) > 100 {
+		history = history[:100]
+	}
+
+	data, err := json.MarshalIndent(history, "", "  ")
+	if err == nil {
+		_ = os.MkdirAll(configDir, 0755)
+		_ = os.WriteFile(historyPath, data, 0644)
+	}
+}
+
+// AddHistory adds cmd to front of history, deduplicates, and caps at 100
+func AddHistory(history []string, cmd string) []string {
+	var result []string
+	result = append(result, cmd)
+	for _, h := range history {
+		if h != cmd {
+			result = append(result, h)
+		}
+		if len(result) >= 100 {
+			break
+		}
+	}
+	return result
 }
