@@ -167,12 +167,12 @@ func NewStyles(cfg config.Config) Styles {
 			Foreground(lipgloss.Color(t.TextPrimary)),
 
 		ZebraItem: lipgloss.NewStyle().
-			Background(lipgloss.Color(t.BgZebra)).
+			Background(lipgloss.Color(t.Bg)).
 			Foreground(lipgloss.Color(t.TextPrimary)).
 			Padding(0, 1),
 
 		ZebraDirItem: lipgloss.NewStyle().
-			Background(lipgloss.Color(t.BgZebra)).
+			Background(lipgloss.Color(t.Bg)).
 			Foreground(lipgloss.Color(t.Directory)).
 			Bold(true).
 			Padding(0, 1),
