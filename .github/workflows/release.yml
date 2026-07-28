@@ -44,7 +44,7 @@ jobs:
           GOOS=windows GOARCH=amd64 go build -ldflags "${LDFLAGS}" -o dist/matt-windows-amd64.exe ./cmd/matt
 
       - name: Upload Artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: matt-binaries-${{ env.VERSION }}
           path: dist/*
