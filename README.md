@@ -23,7 +23,16 @@
 - **Matt** is a fast, keyboard-driven, modern terminal file manager featuring a **Matt Black** design aesthetic. Built with Go and [Bubble Tea](https://github.com/charmbracelet/bubbletea), it offers a **3-column pane system**, **async disk analyzer**, **live fuzzy finder**, **file operations**, **bookmarks**, **command history**, **syntax-highlighted previews**, and a **premium dark UI** with scroll indicators, zebra-striping, and breadcrumb navigation.
 
 <div align=center>
-<img width="1000" alt="matttt" src="https://github.com/user-attachments/assets/36131f34-ebc1-4478-a347-75c983a51efd" />
+  <table>
+      <tr>
+       <td>
+      <img width="559" height="533" alt="mattt" src="https://github.com/user-attachments/assets/bdc8921c-0dd8-4e6d-9db5-d5bcccb974f3" />
+       </td>
+        <td>
+      <img width="1326" height="736" alt="matt" src="https://github.com/user-attachments/assets/e83bd5b0-aa2b-4049-a8e3-897e31cb1457" />
+      </td>
+      </tr>
+  </table>
 </div>
 
 ##  Key Features
