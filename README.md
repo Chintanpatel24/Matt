@@ -21,6 +21,27 @@
 </div>
 
 - **Matt** is a fast, keyboard-driven, modern terminal file manager featuring a **Matt Black** design aesthetic. Built with Go and Bubble Tea, it offers a 3-column pane system, async disk analyzer, live fuzzy finder, file operations, bookmarks, command history, syntax-highlighted previews, and a premium dark UI with scroll indicators, zebra-striping, and breadcrumb navigation.
+- ## Table of Contents
+- [Key Features](#key-features)
+  - [Premium UI](#premium-ui)
+  - [File Management & Bulk Operations](#file-management--bulk-operations)
+  - [Archive Management](#archive-management)
+  - [Navigation & Search](#navigation--search)
+  - [Async Disk Analyzer](#async-disk-analyzer)
+  - [Integrated Terminal & Openers](#integrated-terminal--openers)
+  - [Preview & Inspection](#preview--inspection)
+- [Installation](#installation)
+  - [Quick One-Liner](#quick-one-liner)
+  - [Clone & Build](#clone--build)
+  - [Updating](#updating)
+- [Keyboard Controls](#keyboard-controls)
+  - [Navigation](#navigation-1)
+  - [File Operations](#file-operations-1)
+  - [Tools & Navigation](#tools--navigation-1)
+- [Configuration](#configuration)
+  - [Data Files](#data-files)
+- [License](#license)
+
 
 <div align=center>
   <table>
