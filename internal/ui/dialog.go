@@ -60,7 +60,6 @@ func (d PermissionDialog) View(styles Styles, screenWidth, screenHeight int) str
 		lipgloss.Center,
 		content,
 		lipgloss.WithWhitespaceChars(" "),
-		lipgloss.WithWhitespaceForeground(lipgloss.NoColor{}),
 	)
 }
 

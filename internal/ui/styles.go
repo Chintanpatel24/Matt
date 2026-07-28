@@ -108,12 +108,14 @@ func NewStyles(cfg config.Config) Styles {
 		DirectoryItem: lipgloss.NewStyle().
 			Background(lipgloss.Color(t.Bg)).
 			Foreground(lipgloss.Color(t.Directory)).
-			Bold(true),
+			Bold(true).
+			Padding(0, 1),
 
 		ExecutableItem: lipgloss.NewStyle().
 			Background(lipgloss.Color(t.Bg)).
 			Foreground(lipgloss.Color(t.Executable)).
-			Bold(true),
+			Bold(true).
+			Padding(0, 1),
 
 		MutedText: lipgloss.NewStyle().
 			Background(lipgloss.Color(t.Bg)).
@@ -169,7 +171,8 @@ func NewStyles(cfg config.Config) Styles {
 		ZebraDirItem: lipgloss.NewStyle().
 			Background(lipgloss.Color(t.BgZebra)).
 			Foreground(lipgloss.Color(t.Directory)).
-			Bold(true),
+			Bold(true).
+			Padding(0, 1),
 
 		ScrollIndicator: lipgloss.NewStyle().
 			Foreground(lipgloss.Color(t.TextMuted)).

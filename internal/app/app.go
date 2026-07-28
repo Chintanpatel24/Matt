@@ -1058,8 +1058,19 @@ func (m AppModel) View() string {
 
 	lDirs, lFiles := countDirsFiles(m.LeftEntries)
 	var leftItems []string
-	leftItems = append(leftItems, leftTitleStyle.Render(fmt.Sprintf(" %s %s [%d/%d] %dd %df ",
-		focusIcon, leftTitle, m.LeftCursor+1, len(m.LeftEntries), lDirs, lFiles)))
+	
+	// Format and pad left header to exactly fit leftWidth (excluding borders)
+	leftHeaderStr := fmt.Sprintf(" %s %s [%d/%d] ", focusIcon, leftTitle, m.LeftCursor+1, len(m.LeftEntries))
+	leftCountsStr := fmt.Sprintf("%dd %df ", lDirs, lFiles)
+	if len(leftHeaderStr)+len(leftCountsStr) <= leftWidth {
+		leftHeaderStr += leftCountsStr
+	}
+	if len(leftHeaderStr) > leftWidth {
+		leftHeaderStr = leftHeaderStr[:leftWidth]
+	} else {
+		leftHeaderStr += strings.Repeat(" ", max(0, leftWidth-len(leftHeaderStr)))
+	}
+	leftItems = append(leftItems, leftTitleStyle.Render(leftHeaderStr))
 
 	// Top scroll indicator
 	if m.LeftScroll > 0 {
@@ -1108,12 +1119,24 @@ func (m AppModel) View() string {
 
 	cDirs, cFiles := countDirsFiles(m.CenterEntries)
 	var centerItems []string
+	
+	// Format and pad center header to exactly fit centerWidth
+	var centerHeaderStr string
 	if len(m.CenterEntries) > 0 {
-		centerItems = append(centerItems, centerTitleStyle.Render(fmt.Sprintf(" %s %s [%d/%d] %dd %df ",
-			centerFocusIcon, centerTitle, m.CenterCursor+1, len(m.CenterEntries), cDirs, cFiles)))
+		centerHeaderStr = fmt.Sprintf(" %s %s [%d/%d] ", centerFocusIcon, centerTitle, m.CenterCursor+1, len(m.CenterEntries))
+		centerCountsStr := fmt.Sprintf("%dd %df ", cDirs, cFiles)
+		if len(centerHeaderStr)+len(centerCountsStr) <= centerWidth {
+			centerHeaderStr += centerCountsStr
+		}
 	} else {
-		centerItems = append(centerItems, centerTitleStyle.Render(fmt.Sprintf(" %s %s (empty) ", centerFocusIcon, centerTitle)))
+		centerHeaderStr = fmt.Sprintf(" %s %s (empty) ", centerFocusIcon, centerTitle)
 	}
+	if len(centerHeaderStr) > centerWidth {
+		centerHeaderStr = centerHeaderStr[:centerWidth]
+	} else {
+		centerHeaderStr += strings.Repeat(" ", max(0, centerWidth-len(centerHeaderStr)))
+	}
+	centerItems = append(centerItems, centerTitleStyle.Render(centerHeaderStr))
 
 	// Top scroll indicator
 	if m.CenterScroll > 0 {
@@ -1153,7 +1176,15 @@ func (m AppModel) View() string {
 
 	// 1. Top-Right Preview Box
 	var rightItems []string
-	rightItems = append(rightItems, rightTitleStyle.Render(fmt.Sprintf(" %s Preview [%s] ", rightFocusIcon, m.RightPreview.Info)))
+	
+	// Format and pad right header to exactly fit rightWidth
+	rightHeaderStr := fmt.Sprintf(" %s Preview [%s] ", rightFocusIcon, m.RightPreview.Info)
+	if len(rightHeaderStr) > rightWidth {
+		rightHeaderStr = rightHeaderStr[:rightWidth]
+	} else {
+		rightHeaderStr += strings.Repeat(" ", max(0, rightWidth-len(rightHeaderStr)))
+	}
+	rightItems = append(rightItems, rightTitleStyle.Render(rightHeaderStr))
 
 	previewLines := strings.Split(m.RightPreview.Content, "\n")
 	rStartIdx := max(0, m.RightScroll)
@@ -1250,25 +1281,36 @@ func (m AppModel) View() string {
 		statusBar,
 	)
 
+	rootStyle := lipgloss.NewStyle().
+		Background(lipgloss.Color(m.Config.Theme.Bg)).
+		Width(m.Width).
+		Height(m.Height)
+
 	if m.State == StateDialog {
-		return m.Dialog.View(m.Styles, m.Width, m.Height)
+		return rootStyle.Render(m.Dialog.View(m.Styles, m.Width, m.Height))
 	}
 
-	return viewStr
+	return rootStyle.Render(viewStr)
 }
 
 func (m AppModel) renderAnalyzerView() string {
+	rootStyle := lipgloss.NewStyle().
+		Background(lipgloss.Color(m.Config.Theme.Bg)).
+		Width(m.Width).
+		Height(m.Height)
+
 	if m.State == StateAnalyzerLoading {
-		loadingContent := m.Styles.ModalTitle.Render("📊 Disk Space Analyzer") + "\n\n" +
-			m.Styles.MutedText.Render("  ⏳ Scanning directory...\n  Please wait while disk usage is analyzed.\n\n") +
+		loadingContent := m.Styles.ModalTitle.Render("Disk Space Analyzer") + "\n\n" +
+			m.Styles.MutedText.Render("  Scanning directory...\n  Please wait while disk usage is analyzed.\n\n") +
 			m.Styles.MutedText.Render("  Path: "+m.CurrentDir)
 
 		box := m.Styles.ModalBox.Render(loadingContent)
-		return lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, box, lipgloss.WithWhitespaceChars(" "))
+		placed := lipgloss.Place(m.Width, m.Height, lipgloss.Center, lipgloss.Center, box, lipgloss.WithWhitespaceChars(" "))
+		return rootStyle.Render(placed)
 	}
 
 	var sb strings.Builder
-	sb.WriteString(m.Styles.ModalTitle.Render(fmt.Sprintf("📊 Disk Space Analyzer: %s", m.AnalyzerResult.DirPath)))
+	sb.WriteString(m.Styles.ModalTitle.Render(fmt.Sprintf("Disk Space Analyzer: %s", m.AnalyzerResult.DirPath)))
 	sb.WriteString("\n")
 
 	sortLabel := "Size ↓"
@@ -1303,9 +1345,9 @@ func (m AppModel) renderAnalyzerView() string {
 
 	for i := startIdx; i < endIdx; i++ {
 		item := items[i]
-		prefix := "📁"
+		prefix := "DIR "
 		if !item.IsDir {
-			prefix = "📄"
+			prefix = "FILE"
 		}
 		line := fmt.Sprintf("  %s %-20s  %s  %5.1f%%  %-10s", prefix, item.Name, item.Bar, item.Percentage, analyzer.FormatBytes(item.SizeBytes))
 		if i == m.AnalyzerCursor {
@@ -1329,8 +1371,7 @@ func (m AppModel) renderAnalyzerView() string {
 	sb.WriteString(m.Styles.MutedText.Render(" [↑/↓] Navigate  •  [Enter] Open Dir  •  [s] Toggle Sort  •  [Alt+D / Esc] Close"))
 
 	box := m.Styles.ModalBox.Render(sb.String())
-
-	return lipgloss.Place(
+	placed := lipgloss.Place(
 		m.Width,
 		m.Height,
 		lipgloss.Center,
@@ -1338,11 +1379,17 @@ func (m AppModel) renderAnalyzerView() string {
 		box,
 		lipgloss.WithWhitespaceChars(" "),
 	)
+	return rootStyle.Render(placed)
 }
 
 func (m AppModel) renderBookmarksView() string {
+	rootStyle := lipgloss.NewStyle().
+		Background(lipgloss.Color(m.Config.Theme.Bg)).
+		Width(m.Width).
+		Height(m.Height)
+
 	var sb strings.Builder
-	sb.WriteString(m.Styles.ModalTitle.Render("★ Bookmarks"))
+	sb.WriteString(m.Styles.ModalTitle.Render("Bookmarks"))
 	sb.WriteString("\n\n")
 
 	if len(m.Bookmarks) == 0 {
@@ -1396,8 +1443,7 @@ func (m AppModel) renderBookmarksView() string {
 	sb.WriteString(m.Styles.MutedText.Render(" [↑/↓] Navigate  •  [Enter] Jump  •  [d] Remove  •  [Esc] Close"))
 
 	box := m.Styles.ModalBox.Render(sb.String())
-
-	return lipgloss.Place(
+	placed := lipgloss.Place(
 		m.Width,
 		m.Height,
 		lipgloss.Center,
@@ -1405,4 +1451,5 @@ func (m AppModel) renderBookmarksView() string {
 		box,
 		lipgloss.WithWhitespaceChars(" "),
 	)
+	return rootStyle.Render(placed)
 }

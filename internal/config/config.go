@@ -48,13 +48,13 @@ func DefaultConfig() Config {
 			BgSurface:    "#18181b",
 			BgZebra:      "#0f0f12",
 			Border:       "#27272a",
-			BorderActive: "#e4e4e7",
+			BorderActive: "#71717a",
 			TextPrimary:  "#f8fafc",
 			TextMuted:    "#a1a1aa",
 			Directory:    "#38bdf8",
 			Executable:   "#34d399",
-			Selection:    "#27272a",
-			Accent:       "#e4e4e7",
+			Selection:    "#3f3f46",
+			Accent:       "#a1a1aa",
 			Error:        "#f87171",
 			Warning:      "#fbbf24",
 			Success:      "#4ade80",
@@ -81,14 +81,26 @@ func LoadConfig() Config {
 
 	_ = json.Unmarshal(data, &cfg)
 
-	// Migrate old yellow colors (#eab308) to Lite Grey (#e4e4e7)
+	// Migrate old colors to new high-contrast gray theme
 	modified := false
-	if strings.EqualFold(cfg.Theme.BorderActive, "#eab308") {
-		cfg.Theme.BorderActive = "#e4e4e7"
+	if strings.EqualFold(cfg.Theme.BorderActive, "#eab308") || strings.EqualFold(cfg.Theme.BorderActive, "#e4e4e7") || cfg.Theme.BorderActive == "" {
+		cfg.Theme.BorderActive = "#71717a"
 		modified = true
 	}
-	if strings.EqualFold(cfg.Theme.Accent, "#eab308") {
-		cfg.Theme.Accent = "#e4e4e7"
+	if strings.EqualFold(cfg.Theme.Accent, "#eab308") || strings.EqualFold(cfg.Theme.Accent, "#e4e4e7") || cfg.Theme.Accent == "" {
+		cfg.Theme.Accent = "#a1a1aa"
+		modified = true
+	}
+	if strings.EqualFold(cfg.Theme.Selection, "#27272a") || cfg.Theme.Selection == "" {
+		cfg.Theme.Selection = "#3f3f46"
+		modified = true
+	}
+	if cfg.Theme.BgZebra == "" {
+		cfg.Theme.BgZebra = "#0f0f12"
+		modified = true
+	}
+	if cfg.Theme.Warning == "" {
+		cfg.Theme.Warning = "#fbbf24"
 		modified = true
 	}
 
