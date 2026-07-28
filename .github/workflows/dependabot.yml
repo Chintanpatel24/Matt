@@ -1,0 +1,24 @@
+# Dependabot configuration for Chintanpatel24/Matt repository
+version: 2
+updates:
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "dependencies"
+      - "mattbot"
+    commit-message:
+      prefix: "[mattbot]"
+      include: "scope"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    labels:
+      - "github-actions"
+      - "mattbot"
+    commit-message:
+      prefix: "[mattbot]"
+      include: "scope"
