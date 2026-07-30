@@ -40,6 +40,21 @@ func ExecuteCommand(input string, currentDir string, cfg config.Config) CommandR
 		head = parts[0]
 	}
 
+	// Special handling for . (open GUI file manager like Thunar/Nautilus)
+	if head == "." {
+		targetDir := currentDir
+		if len(parts) > 1 {
+			rawPath := strings.TrimSpace(cmdStr[1:])
+			if (strings.HasPrefix(rawPath, "\"") && strings.HasSuffix(rawPath, "\"")) ||
+				(strings.HasPrefix(rawPath, "'") && strings.HasSuffix(rawPath, "'")) {
+				rawPath = rawPath[1 : len(rawPath)-1]
+			}
+			expanded := config.ExpandPath(rawPath)
+			targetDir = resolveDirectoryPath(expanded, currentDir)
+		}
+		return launchGUIFileManager(targetDir)
+	}
+
 	// Special handling for cd
 	if head == "cd" {
 		targetDir := config.GetHomeDir()
@@ -134,3 +149,60 @@ func resolveDirectoryPath(path string, currentDir string) string {
 	// 3. Fall back to relative path so standard OS error is returned
 	return relPath
 }
+
+// launchGUIFileManager attempts to open the specified directory in the system GUI file manager.
+func launchGUIFileManager(dir string) CommandResult {
+	absPath, err := filepath.Abs(dir)
+	if err != nil {
+		absPath = dir
+	}
+
+	// List of known GUI file managers in order of preference
+	guiManagers := []string{
+		"thunar",
+		"nautilus",
+		"dolphin",
+		"nemo",
+		"pcmanfm",
+		"caja",
+		"xdg-open",
+	}
+
+	macCheck := exec.Command("uname")
+	out, _ := macCheck.Output()
+	if strings.Contains(strings.ToLower(string(out)), "darwin") {
+		cmd := exec.Command("open", absPath)
+		if err := cmd.Start(); err == nil {
+			return CommandResult{
+				Output: fmt.Sprintf("✓ Opened macOS Finder for %s", absPath),
+			}
+		}
+	}
+
+	if strings.Contains(strings.ToLower(os.Getenv("OS")), "windows") {
+		cmd := exec.Command("explorer.exe", absPath)
+		if err := cmd.Start(); err == nil {
+			return CommandResult{
+				Output: fmt.Sprintf("✓ Opened File Explorer for %s", absPath),
+			}
+		}
+	}
+
+	for _, mgr := range guiManagers {
+		path, err := exec.LookPath(mgr)
+		if err == nil && path != "" {
+			cmd := exec.Command(mgr, absPath)
+			if err := cmd.Start(); err == nil {
+				return CommandResult{
+					Output: fmt.Sprintf("✓ Opened GUI file manager (%s) for %s", mgr, absPath),
+				}
+			}
+		}
+	}
+
+	return CommandResult{
+		Output: fmt.Sprintf("✗ Could not launch GUI file manager for %s", absPath),
+		Err:    fmt.Errorf("no GUI file manager found"),
+	}
+}
+

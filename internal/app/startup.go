@@ -65,6 +65,14 @@ func (m StartupModel) Update(msg tea.Msg) (StartupModel, tea.Cmd) {
 			if m.Cursor < 1 {
 				m.Cursor++
 			}
+		case "1":
+			m.Cursor = 0
+			m.Selected = ChoiceCurrentDir
+			m.IsDone = true
+		case "2":
+			m.Cursor = 1
+			m.Selected = ChoiceHomeDir
+			m.IsDone = true
 		case "enter":
 			if m.Cursor == 0 {
 				m.Selected = ChoiceCurrentDir
@@ -78,58 +86,94 @@ func (m StartupModel) Update(msg tea.Msg) (StartupModel, tea.Cmd) {
 }
 
 func (m StartupModel) View() string {
-	asciiLogo := `███▄ ▄███▓ ▄▄▄     ▄▄▄█████▓▄▄▄█████▓
-▓██▒▀█▀ ██▒▒████▄   ▓  ██▒ ▓▒▓  ██▒ ▓▒
-▓██    ▓██░▒██  ▀█▄ ▒ ▓██░ ▒░▒ ▓██░ ▒░
-▒██    ▒██ ░██▄▄▄▄██░ ▓██▓ ░ ░ ▓██▓ ░ 
-▒██▒   ░██▒ ▓█   ▓██▒ ▒██▒ ░   ▒██▒ ░ 
-░ ▒░   ░  ░ ▒▒   ▓▒█░ ▒ ░░     ▒ ░░   
-░  ░      ░  ▒   ▒▒ ░   ░        ░    
-░      ░     ░   ▒    ░        ░      
-       ░         ░  ░`
+	asciiLogo := `
+  ███▄ ▄███▓ ▄▄▄     ▄▄▄█████▓▄▄▄█████▓
+ ▓██▒▀█▀ ██▒▒████▄   ▓  ██▒ ▓▒▓  ██▒ ▓▒
+ ▓██    ▓██░▒██  ▀█▄ ▒ ▓██░ ▒░▒ ▓██░ ▒░
+ ▒██    ▒██ ░██▄▄▄▄██░ ▓██▓ ░ ░ ▓██▓ ░ 
+ ▒██▒   ░██▒ ▓█   ▓██▒ ▒██▒ ░   ▒██▒ ░ 
+ ░ ▒░   ░  ░ ▒▒   ▓▒█░ ▒ ░░     ▒ ░░   
+`
 
 	var sb strings.Builder
 
-	// Logo Header
-	sb.WriteString(lipgloss.NewStyle().Align(lipgloss.Center).Render(m.Styles.HeaderTitle.Render(asciiLogo)))
-	sb.WriteString("\n\n")
+	// Logo Header Box
+	logoStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color(m.Config.Theme.Accent)).
+		Bold(true).
+		Align(lipgloss.Center)
 
-	// Version Subtitle
-	subtitle := fmt.Sprintf("Matt Black Terminal File Manager %s", version.Version)
-	sb.WriteString(lipgloss.NewStyle().Width(52).Align(lipgloss.Center).Render(m.Styles.MutedText.Render(subtitle)))
+	sb.WriteString(logoStyle.Render(asciiLogo))
+	sb.WriteString("\n")
+
+	// Version Badge
+	verBadge := lipgloss.NewStyle().
+		Background(lipgloss.Color(m.Config.Theme.Accent)).
+		Foreground(lipgloss.Color(m.Config.Theme.Bg)).
+		Bold(true).
+		Padding(0, 2).
+		Render(" MATT " + version.Version + " ")
+
+	subTitle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color(m.Config.Theme.TextMuted)).
+		Render("High-Performance Terminal Workspace & File Manager")
+
+	sb.WriteString(lipgloss.NewStyle().Width(56).Align(lipgloss.Center).Render(verBadge))
+	sb.WriteString("\n")
+	sb.WriteString(lipgloss.NewStyle().Width(56).Align(lipgloss.Center).Render(subTitle))
 	sb.WriteString("\n\n")
 
 	// Prompt Title
-	promptHeader := m.Styles.Header.Render(" Choose Workspace Session ")
-	sb.WriteString(lipgloss.NewStyle().Width(52).Align(lipgloss.Center).Render(promptHeader))
-	sb.WriteString("\n\n")
+	headerText := lipgloss.NewStyle().
+		Foreground(lipgloss.Color(m.Config.Theme.TextPrimary)).
+		Bold(true).
+		Render("Select Workspace Session:")
 
-	// Options
-	opt0Str := fmt.Sprintf("Open Current Directory (%s)", shortenPath(m.CurrentPath))
-	opt1Str := fmt.Sprintf("Open Fresh Session (%s)", shortenPath(m.HomePath))
+	sb.WriteString("  " + headerText + "\n\n")
 
-	var opt0, opt1 string
+	// Session Options
+	opt0Path := shortenPath(m.CurrentPath)
+	opt1Path := shortenPath(m.HomePath)
+
+	activeCardStyle := lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color(m.Config.Theme.Accent)).
+		Background(lipgloss.Color(m.Config.Theme.Selection)).
+		Foreground(lipgloss.Color(m.Config.Theme.TextPrimary)).
+		Padding(0, 1).
+		Width(52)
+
+	inactiveCardStyle := lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color(m.Config.Theme.Border)).
+		Background(lipgloss.Color(m.Config.Theme.Bg)).
+		Foreground(lipgloss.Color(m.Config.Theme.TextMuted)).
+		Padding(0, 1).
+		Width(52)
+
+	var card0, card1 string
 	if m.Cursor == 0 {
-		opt0 = m.Styles.ModalButtonActive.Render(fmt.Sprintf(" ▌ %s ", opt0Str))
-		opt1 = m.Styles.MutedText.Render(fmt.Sprintf("   %s", opt1Str))
+		card0 = activeCardStyle.Render(fmt.Sprintf("➜ [1] Open Current Directory\n    %s", opt0Path))
+		card1 = inactiveCardStyle.Render(fmt.Sprintf("  [2] Open Home Directory\n    %s", opt1Path))
 	} else {
-		opt0 = m.Styles.MutedText.Render(fmt.Sprintf("   %s", opt0Str))
-		opt1 = m.Styles.ModalButtonActive.Render(fmt.Sprintf(" ▌ %s ", opt1Str))
+		card0 = inactiveCardStyle.Render(fmt.Sprintf("  [1] Open Current Directory\n    %s", opt0Path))
+		card1 = activeCardStyle.Render(fmt.Sprintf("➜ [2] Open Home Directory\n    %s", opt1Path))
 	}
 
-	sb.WriteString(opt0)
-	sb.WriteString("\n\n")
-	sb.WriteString(opt1)
-	sb.WriteString("\n\n")
+	sb.WriteString("  " + strings.ReplaceAll(card0, "\n", "\n  ") + "\n")
+	sb.WriteString("  " + strings.ReplaceAll(card1, "\n", "\n  ") + "\n\n")
 
-	// Footer controls hint
-	controls := m.Styles.MutedText.Render("[↑/↓] Navigate  •  [Enter] Confirm  •  [q] Quit")
-	sb.WriteString(lipgloss.NewStyle().Width(52).Align(lipgloss.Center).Render(controls))
+	// Quick Key Guide Footer
+	controls := lipgloss.NewStyle().
+		Foreground(lipgloss.Color(m.Config.Theme.TextMuted)).
+		Render(" [1/2] Quick Select • [↑/↓/k/j] Navigate • [Enter] Launch ")
 
-	box := m.Styles.ModalBox.Render(sb.String())
+	sb.WriteString(lipgloss.NewStyle().Width(56).Align(lipgloss.Center).Render(controls))
+
+	mainBox := m.Styles.ModalBox.Width(60).Render(sb.String())
 
 	if m.Width <= 0 || m.Height <= 0 {
-		return box
+		return mainBox
 	}
 
 	return lipgloss.Place(
@@ -137,7 +181,7 @@ func (m StartupModel) View() string {
 		m.Height,
 		lipgloss.Center,
 		lipgloss.Center,
-		box,
+		mainBox,
 		lipgloss.WithWhitespaceChars(" "),
 	)
 }
@@ -147,8 +191,8 @@ func shortenPath(path string) string {
 	if strings.HasPrefix(path, home) {
 		path = "~" + path[len(home):]
 	}
-	if len(path) > 28 {
-		return "..." + path[len(path)-25:]
+	if len(path) > 38 {
+		return "..." + path[len(path)-35:]
 	}
 	return path
 }
