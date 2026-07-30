@@ -10,6 +10,7 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/mattn/go-runewidth"
 	"github.com/Chintanpatel24/Matt/internal/analyzer"
 	"github.com/Chintanpatel24/Matt/internal/config"
 	"github.com/Chintanpatel24/Matt/internal/filetree"
@@ -41,6 +42,7 @@ const (
 	StateAnalyzerLoading
 	StateBookmarks
 	StateInput
+	StateHelp
 )
 
 // InputAction describes what the text input prompt is for.
@@ -166,7 +168,7 @@ func NewAppModel(cfg config.Config, initialDir string) AppModel {
 		MultiSelect:    make(map[string]bool),
 		UndoStack:      []UndoAction{},
 		ClipboardPaths: []string{},
-		LastCmdOut:     "Ready. Press [Tab] focus • [/] filter • [Alt+D] analyzer • [:] cmd • [.] hidden",
+		LastCmdOut:     "Ready. [Tab] focus • [/] filter • [:] cmd • [.] GUI mgr • [?] help",
 		StatusMsg:      fmt.Sprintf("Matt %s — Matt Black Terminal File Manager", version.Version),
 	}
 
@@ -174,6 +176,31 @@ func NewAppModel(cfg config.Config, initialDir string) AppModel {
 	m.refreshCenterAndRight()
 
 	return m
+}
+
+func (m *AppModel) clampScroll() {
+	mainHeight := max(10, m.Height-10)
+	maxVisibleRows := max(1, mainHeight-4)
+
+	if m.LeftCursor < m.LeftScroll {
+		m.LeftScroll = m.LeftCursor
+	}
+	if m.LeftCursor >= m.LeftScroll+maxVisibleRows {
+		m.LeftScroll = max(0, m.LeftCursor-maxVisibleRows+1)
+	}
+	if m.LeftScroll < 0 {
+		m.LeftScroll = 0
+	}
+
+	if m.CenterCursor < m.CenterScroll {
+		m.CenterScroll = m.CenterCursor
+	}
+	if m.CenterCursor >= m.CenterScroll+maxVisibleRows {
+		m.CenterScroll = max(0, m.CenterCursor-maxVisibleRows+1)
+	}
+	if m.CenterScroll < 0 {
+		m.CenterScroll = 0
+	}
 }
 
 func (m *AppModel) refreshLeftEntries() {
@@ -200,6 +227,7 @@ func (m *AppModel) refreshLeftEntries() {
 	if m.LeftCursor >= len(m.LeftEntries) {
 		m.LeftCursor = max(0, len(m.LeftEntries)-1)
 	}
+	m.clampScroll()
 }
 
 func (m *AppModel) refreshCenterAndRight() {
@@ -251,6 +279,7 @@ func (m *AppModel) refreshCenterAndRight() {
 	previewWidth := max(30, (m.Width/3)-4)
 	previewHeight := max(6, m.Height-18)
 	m.RightPreview = preview.GeneratePreview(selected, previewWidth, previewHeight)
+	m.clampScroll()
 }
 
 // countDirsFiles returns separate dir and file counts.
@@ -533,7 +562,19 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	// 7. Main View Mode
+	// 7. Help Modal State
+	if m.State == StateHelp {
+		if keyMsg, ok := msg.(tea.KeyMsg); ok {
+			switch keyMsg.String() {
+			case "esc", "q", "?", "f1":
+				m.State = StateMain
+				return m, nil
+			}
+		}
+		return m, nil
+	}
+
+	// 8. Main View Mode
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.String() == "alt+d" || msg.String() == "alt+D" {
@@ -572,6 +613,104 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			case "q", "ctrl+c":
 				return m, tea.Quit
+
+			case "?", "f1":
+				m.State = StateHelp
+				return m, nil
+
+			case "~", "H":
+				m.CurrentDir = config.GetHomeDir()
+				m.LeftCursor = 0
+				m.LeftScroll = 0
+				m.CenterCursor = 0
+				m.CenterScroll = 0
+				m.RightScroll = 0
+				m.FilterInput.SetValue("")
+				m.refreshLeftEntries()
+				m.refreshCenterAndRight()
+				m.StatusMsg = "Jumped to Home directory (~)"
+				return m, nil
+
+			case "backspace":
+				parentDir := filepath.Dir(m.CurrentDir)
+				if parentDir != m.CurrentDir {
+					m.CurrentDir = parentDir
+					m.LeftCursor = 0
+					m.LeftScroll = 0
+					m.CenterCursor = 0
+					m.CenterScroll = 0
+					m.RightScroll = 0
+					m.FilterInput.SetValue("")
+					m.refreshLeftEntries()
+					m.refreshCenterAndRight()
+				}
+				return m, nil
+
+			case "ctrl+u", "pageup":
+				pageSize := max(1, (m.Height-14)/2)
+				switch m.Focus {
+				case PaneLeft:
+					m.LeftCursor = max(0, m.LeftCursor-pageSize)
+					m.RightScroll = 0
+					m.refreshCenterAndRight()
+				case PaneCenter:
+					m.CenterCursor = max(0, m.CenterCursor-pageSize)
+					m.RightScroll = 0
+					m.refreshCenterAndRight()
+				case PaneRight:
+					m.RightScroll = max(0, m.RightScroll-pageSize)
+				}
+				return m, nil
+
+			case "ctrl+d", "pagedown":
+				pageSize := max(1, (m.Height-14)/2)
+				switch m.Focus {
+				case PaneLeft:
+					m.LeftCursor = min(max(0, len(m.LeftEntries)-1), m.LeftCursor+pageSize)
+					m.RightScroll = 0
+					m.refreshCenterAndRight()
+				case PaneCenter:
+					m.CenterCursor = min(max(0, len(m.CenterEntries)-1), m.CenterCursor+pageSize)
+					m.RightScroll = 0
+					m.refreshCenterAndRight()
+				case PaneRight:
+					m.RightScroll += pageSize
+				}
+				return m, nil
+
+			case "e", "E":
+				var target filetree.FileEntry
+				if m.Focus == PaneCenter && len(m.CenterEntries) > 0 {
+					target = m.CenterEntries[m.CenterCursor]
+				} else if len(m.LeftEntries) > 0 {
+					target = m.LeftEntries[m.LeftCursor]
+				}
+				if target.Name != "" && !target.IsDir {
+					editor := os.Getenv("EDITOR")
+					if editor == "" {
+						editor = os.Getenv("VISUAL")
+					}
+					if editor == "" {
+						for _, ed := range []string{"nvim", "vim", "nano"} {
+							if _, err := exec.LookPath(ed); err == nil {
+								editor = ed
+								break
+							}
+						}
+					}
+					if editor != "" {
+						c := exec.Command(editor, target.Path)
+						c.Stdin = os.Stdin
+						c.Stdout = os.Stdout
+						c.Stderr = os.Stderr
+						return m, tea.ExecProcess(c, func(err error) tea.Msg {
+							return nil
+						})
+					} else {
+						m.StatusMsg = "No editor found ($EDITOR, nvim, vim, nano)"
+					}
+				}
+				return m, nil
 
 			case "/":
 				m.IsFiltering = true
@@ -1021,6 +1160,19 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.RightScroll = 0
 							m.refreshCenterAndRight()
 						}
+					} else {
+						var cmd *exec.Cmd
+						macCheck := exec.Command("uname")
+						out, _ := macCheck.Output()
+						if strings.Contains(strings.ToLower(string(out)), "darwin") {
+							cmd = exec.Command("open", selected.Path)
+						} else {
+							cmd = exec.Command("xdg-open", selected.Path)
+						}
+						if cmd != nil {
+							_ = cmd.Start()
+							m.StatusMsg = fmt.Sprintf("Opened: %s", selected.Name)
+						}
 					}
 				}
 			case "left", "h":
@@ -1065,6 +1217,19 @@ func (m AppModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						m.FilterInput.SetValue("")
 						m.refreshLeftEntries()
 						m.refreshCenterAndRight()
+					} else {
+						var cmd *exec.Cmd
+						macCheck := exec.Command("uname")
+						out, _ := macCheck.Output()
+						if strings.Contains(strings.ToLower(string(out)), "darwin") {
+							cmd = exec.Command("open", selected.Path)
+						} else {
+							cmd = exec.Command("xdg-open", selected.Path)
+						}
+						if cmd != nil {
+							_ = cmd.Start()
+							m.StatusMsg = fmt.Sprintf("Opened: %s", selected.Name)
+						}
 					}
 				}
 			case "left", "h":
@@ -1116,8 +1281,10 @@ func (m *AppModel) handleCommandResult(res terminal.CommandResult) {
 	}
 }
 
-// renderFileItem renders a single file list row with zebra-striping, size column, accent bar.
+// renderFileItem renders a single file list row with zebra-striping, size column, accent bar using exact cell widths.
 func (m AppModel) renderFileItem(entry filetree.FileEntry, idx int, cursor int, isFocused bool, paneWidth int) string {
+	innerWidth := max(10, paneWidth-2)
+
 	icon := entry.Icon
 	name := entry.Name
 	if entry.IsDir && name != ".." {
@@ -1129,17 +1296,15 @@ func (m AppModel) renderFileItem(entry filetree.FileEntry, idx int, cursor int, 
 		sizeStr = entry.FormatSize()
 	}
 
-	// Multi-select prefix
 	selectPrefix := "  "
 	if m.MultiSelect[entry.Path] {
 		selectPrefix = "✓ "
 	}
 
-	// Git status styling
 	gitSuffix := ""
-	unrenderedGitSuffix := ""
+	gitSuffixWidth := 0
 	if entry.GitStatus != "" {
-		unrenderedGitSuffix = " [" + entry.GitStatus + "]"
+		gitSuffixWidth = 4
 		switch entry.GitStatus {
 		case "M":
 			gitSuffix = m.Styles.GitModified.Render(" [M]")
@@ -1152,37 +1317,37 @@ func (m AppModel) renderFileItem(entry filetree.FileEntry, idx int, cursor int, 
 		}
 	}
 
-	// Build the item text
-	nameDisplay := fmt.Sprintf("%s%s %s", selectPrefix, icon, name)
-	if entry.IsSymlink && entry.SymlinkTarget != "" {
-		nameDisplay += fmt.Sprintf(" → %s", entry.SymlinkTarget)
-	}
-
-	// Calculate available width for name (leave room for size)
-	availWidth := max(10, paneWidth-len(sizeStr)-6)
-	unrenderedTotal := len(nameDisplay) + len(unrenderedGitSuffix)
-	if unrenderedTotal > availWidth {
-		allowedNameLen := availWidth - len(unrenderedGitSuffix)
-		if len(nameDisplay) > allowedNameLen && allowedNameLen > 3 {
-			nameDisplay = nameDisplay[:allowedNameLen-1] + "…"
-		}
-	}
-
-	// Pad to fill width
-	gap := max(0, paneWidth-len(nameDisplay)-len(unrenderedGitSuffix)-len(sizeStr)-4)
-	line := nameDisplay + gitSuffix + strings.Repeat(" ", gap) + sizeStr
-
+	prefix := "  "
 	if idx == cursor {
-		prefix := "  "
 		if isFocused {
 			prefix = m.Styles.AccentBar.Render("▌") + " "
 		}
+	}
+
+	prefixWidth := runewidth.StringWidth(prefix)
+	selectWidth := runewidth.StringWidth(selectPrefix)
+	iconWidth := runewidth.StringWidth(icon)
+	sizeWidth := runewidth.StringWidth(sizeStr)
+
+	fixedWidth := prefixWidth + selectWidth + iconWidth + 1 + gitSuffixWidth + sizeWidth
+	availForName := innerWidth - fixedWidth
+
+	nameDisplay := name
+	if runewidth.StringWidth(name) > availForName {
+		nameDisplay = runewidth.Truncate(name, max(3, availForName), "…")
+	}
+
+	nameWidth := runewidth.StringWidth(nameDisplay)
+	usedWidth := prefixWidth + selectWidth + iconWidth + 1 + nameWidth + gitSuffixWidth + sizeWidth
+	gapLen := max(0, innerWidth-usedWidth)
+
+	line := fmt.Sprintf("%s%s %s%s%s%s", selectPrefix, icon, nameDisplay, gitSuffix, strings.Repeat(" ", gapLen), sizeStr)
+
+	if idx == cursor {
 		return m.Styles.SelectedItem.Render(prefix + line)
 	}
 
-	prefix := "  "
 	isZebra := idx%2 == 1
-
 	if entry.IsDir {
 		if isZebra {
 			return m.Styles.ZebraDirItem.Render(prefix + line)
@@ -1198,6 +1363,10 @@ func (m AppModel) renderFileItem(entry filetree.FileEntry, idx int, cursor int, 
 func (m AppModel) View() string {
 	if m.State == StateStartup {
 		return m.Startup.View()
+	}
+
+	if m.State == StateHelp {
+		return m.renderHelpView()
 	}
 
 	if m.State == StateAnalyzer || m.State == StateAnalyzerLoading {
@@ -1673,3 +1842,95 @@ func (m AppModel) renderBookmarksView() string {
 	)
 	return rootStyle.Render(placed)
 }
+
+func (m AppModel) renderHelpView() string {
+	rootStyle := lipgloss.NewStyle().
+		Background(lipgloss.Color(m.Config.Theme.Bg)).
+		Width(m.Width).
+		Height(m.Height)
+
+	var sb strings.Builder
+	sb.WriteString(m.Styles.ModalTitle.Render(" Matt Terminal File Manager — Keyboard Shortcuts & Help "))
+	sb.WriteString("\n\n")
+
+	type helpItem struct {
+		key  string
+		desc string
+	}
+
+	categories := []struct {
+		title string
+		items []helpItem
+	}{
+		{
+			title: "Navigation & Focus",
+			items: []helpItem{
+				{"k / ↑, j / ↓", "Navigate up / down in active pane"},
+				{"h / ←, l / →", "Parent dir / open folder or file"},
+				{"Ctrl+U / Ctrl+D", "Half-page scroll up / down"},
+				{"gg / G", "Jump to top / bottom of list"},
+				{"Tab / Shift+Tab", "Cycle active pane focus"},
+				{"~ / H", "Jump directly to Home directory"},
+				{"Backspace", "Go up to parent directory"},
+			},
+		},
+		{
+			title: "File Operations",
+			items: []helpItem{
+				{"Enter", "Open folder / View or execute file"},
+				{"e / E", "Edit file in $EDITOR (nvim/vim/nano)"},
+				{"n / N", "Create new file / new directory"},
+				{"m", "Rename selected item"},
+				{"d", "Delete item (with confirmation)"},
+				{"c / x / p", "Copy / Cut / Paste items"},
+				{"u", "Undo last rename/paste operation"},
+				{"z / Z", "Archive (zip) / Extract archive"},
+				{"Space", "Toggle multi-selection"},
+			},
+		},
+		{
+			title: "Terminal & System",
+			items: []helpItem{
+				{":", "Focus bottom terminal prompt"},
+				{". (in terminal)", "Open GUI file manager (Thunar/Nautilus) in real time"},
+				{"/ ", "Instant fuzzy search and filter"},
+				{"Alt+D", "Toggle Disk Usage Analyzer"},
+				{"b / B", "View bookmarks / Add current dir"},
+				{".", "Toggle hidden files visibility"},
+				{"r", "Refresh workspace directory"},
+				{"? / F1", "Toggle this help modal"},
+				{"q / Ctrl+C", "Quit Matt"},
+			},
+		},
+	}
+
+	for _, cat := range categories {
+		sb.WriteString(m.Styles.HelpCategory.Render("▸ " + cat.title))
+		sb.WriteString("\n")
+		for _, item := range cat.items {
+			keyPadded := fmt.Sprintf("%-16s", item.key)
+			sb.WriteString(fmt.Sprintf("  %s %s\n", m.Styles.HelpKey.Render(keyPadded), m.Styles.HelpDesc.Render(item.desc)))
+		}
+		sb.WriteString("\n")
+	}
+
+	sb.WriteString(m.Styles.MutedText.Render(" Press [Esc], [q], or [?] to close help "))
+
+	boxWidth := min(74, max(42, m.Width-4))
+	box := m.Styles.HelpModalBox.Width(boxWidth).Render(sb.String())
+
+	if m.Width <= 0 || m.Height <= 0 {
+		return box
+	}
+
+	placed := lipgloss.Place(
+		m.Width,
+		m.Height,
+		lipgloss.Center,
+		lipgloss.Center,
+		box,
+		lipgloss.WithWhitespaceChars(" "),
+	)
+	return rootStyle.Render(placed)
+}
+

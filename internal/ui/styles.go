@@ -45,6 +45,10 @@ type Styles struct {
 	GitModified       lipgloss.Style
 	GitAdded          lipgloss.Style
 	GitUntracked      lipgloss.Style
+	HelpModalBox      lipgloss.Style
+	HelpCategory      lipgloss.Style
+	HelpKey           lipgloss.Style
+	HelpDesc          lipgloss.Style
 }
 
 // NewStyles constructs all styles using the Lite Grey & Matt Black theme configuration.
@@ -246,5 +250,27 @@ func NewStyles(cfg config.Config) Styles {
 		GitUntracked: lipgloss.NewStyle().
 			Foreground(lipgloss.Color(t.TextMuted)).
 			Italic(true),
+
+		HelpModalBox: lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color(t.Accent)).
+			BorderBackground(lipgloss.Color(t.BgSurface)).
+			Background(lipgloss.Color(t.BgSurface)).
+			Padding(1, 2),
+
+		HelpCategory: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.Accent)).
+			Background(lipgloss.Color(t.BgSurface)).
+			Bold(true),
+
+		HelpKey: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.Executable)).
+			Background(lipgloss.Color(t.Selection)).
+			Bold(true).
+			Padding(0, 1),
+
+		HelpDesc: lipgloss.NewStyle().
+			Foreground(lipgloss.Color(t.TextPrimary)).
+			Background(lipgloss.Color(t.BgSurface)),
 	}
 }

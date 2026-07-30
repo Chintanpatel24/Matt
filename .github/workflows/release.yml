@@ -1,6 +1,8 @@
 name: Release & Auto-Version
 
 on:
+  release:
+    types: [published]
   push:
     tags:
       - 'v*'
@@ -29,20 +31,31 @@ jobs:
       - name: Determine Version Tag
         id: get_version
         run: |
-          TAG_NAME="${GITHUB_REF#refs/tags/}"
-          echo "VERSION=${TAG_NAME}" >> $GITHUB_ENV
-          echo "Building Matt for tag version: ${TAG_NAME}"
+          RAW_TAG="${{ github.event.release.tag_name }}"
+          if [ -z "$RAW_TAG" ]; then
+            RAW_TAG="${GITHUB_REF#refs/tags/}"
+          fi
+
+          # Standardize tag format (ensure leading v if semantic version)
+          if [[ "$RAW_TAG" =~ ^[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            VERSION="v${RAW_TAG}"
+          else
+            VERSION="${RAW_TAG}"
+          fi
+
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "Building Matt for version: ${VERSION}"
 
       - name: Auto-Update Code Version File
         run: |
           echo "Updating internal/version/version.go directly in repository code to ${{ env.VERSION }}"
           cat <<EOF > internal/version/version.go
-          package version
+package version
 
-          // Version is the application version string.
-          // Automatically updated by GitHub release workflow on tag push.
-          var Version = "${{ env.VERSION }}"
-          EOF
+// Version is the application version string.
+// Automatically updated by GitHub release workflow on release/tag push.
+var Version = "${{ env.VERSION }}"
+EOF
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -67,11 +80,11 @@ jobs:
           name: matt-binaries-${{ env.VERSION }}
           path: dist/*
 
-      - name: Create GitHub Release with Binaries
+      - name: Create or Update GitHub Release with Binaries
         uses: softprops/action-gh-release@v2
         with:
           name: Matt ${{ env.VERSION }}
-          tag_name: ${{ github.ref_name }}
+          tag_name: ${{ env.VERSION }}
           draft: false
           prerelease: false
           generate_release_notes: true

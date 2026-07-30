@@ -36,3 +36,14 @@ func TestExecuteCommand_Alias(t *testing.T) {
 		t.Errorf("Expected 'hello from alias', got '%s'", res.Output)
 	}
 }
+
+func TestExecuteCommand_Dot(t *testing.T) {
+	tempDir := t.TempDir()
+	cfg := config.DefaultConfig()
+
+	res := ExecuteCommand(".", tempDir, cfg)
+	if res.Output == "" {
+		t.Errorf("Expected output from '.' command, got empty string")
+	}
+}
+
