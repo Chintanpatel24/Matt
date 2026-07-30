@@ -20,6 +20,9 @@
 [![GitHub Stars](https://img.shields.io/github/stars/Chintanpatel24/Matt?style=flat&color=eab308)](https://github.com/Chintanpatel24/Matt)
 </div>
 
+>[!IMPORTANT]
+>- The latest version contains some glitches, so use version 1.1.0 or 1.0.0
+
 - **Matt** is a fast, keyboard-driven, modern terminal file manager featuring a **Matt Black** design aesthetic. Built with Go and Bubble Tea, it offers a 3-column pane system, async disk analyzer, live fuzzy finder, file operations, bookmarks, command history, syntax-highlighted previews, and a premium dark UI with scroll indicators, zebra-striping, and breadcrumb navigation.
 - ## Table of Contents
 - [Key Features](#key-features)
